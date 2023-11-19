@@ -59,7 +59,7 @@ Install artifactory in the namespace __tools__
 ![](./images/ar.PNG)
 ![](./images/ar1.PNG)
 
-We opted for the `__upgrade --install__` flag over `__helm install artifactory jfrog/artifactory__` for enhanced best practices, especially in CI pipeline development for helm deployments. This approach guarantees that helm performs an upgrade if an installation exists. In the absence of an existing installation, it conducts the initial install. This strategy assures a fail-safe command; it intelligently discerns whether an upgrade or a fresh installation is needed, preventing failures.
+We opted for the `upgrade --install` flag over `helm install artifactory jfrog/artifactory` for enhanced best practices, especially in CI pipeline development for helm deployments. This approach guarantees that helm performs an upgrade if an installation exists. In the absence of an existing installation, it conducts the initial install. This strategy assures a fail-safe command; it intelligently discerns whether an upgrade or a fresh installation is needed, preventing failures.
 
 To see the various versions
 
