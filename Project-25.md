@@ -20,6 +20,19 @@ In this project, the requirement is to use Jfrog Artifactory as a private regist
 
 __Deploy Jfrog Artifactory into Kubernetes__
 
+
+First, we bring up the EKS cluster from the previous project. See [Project-24](https://github.com/dybran/Project-24/blob/main/Project-24.md).
+
+Create kubeconfig file using awscli and connect to the kubectl.
+
+`$ aws eks update-kubeconfig --name dybran-eks-tooling --region us-west-1`
+
+Create a namespace __tools__ where all the DevOps tools will be deployed. We will also be deploying jenkins from the previous project in this namespace.
+
+`$ kubectl create ns tools`
+
+![](./images/cr.PNG)
+
 The best approach to easily get Artifactory into kubernetes is to use helm.
 
 Search for an official helm chart for Artifactory on [Artifact Hub](https://artifacthub.io/).
@@ -30,5 +43,30 @@ Click on __install__ to display the commands for  installation.
 
 ![](./images/arti2.PNG)
 ![](./images/arti3.PNG)
+
+Add the repo
+
+`$ helm repo add jfrog https://charts.jfrog.io`
+
+Update the helm repo index on my local machine/laptop
+
+`$ helm repo update`
+
+Install artifactory in the namespace __tools__
+
+`$ helm upgrade --install artifactory jfrog/artifactory --version 107.71.4 -n tools`
+
+![](./images/ar.PNG)
+![](./images/ar1.PNG)
+
+We opted for the `__upgrade --install__` flag over `__helm install artifactory jfrog/artifactory__` for enhanced best practices, especially in CI pipeline development for helm deployments. This approach guarantees that helm performs an upgrade if an installation exists. In the absence of an existing installation, it conducts the initial install. This strategy assures a fail-safe command; it intelligently discerns whether an upgrade or a fresh installation is needed, preventing failures.
+
+To see the various versions
+
+![](./images/see1.PNG)
+![](./images/see2.PNG)
+
+
+
 
 
