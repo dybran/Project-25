@@ -74,5 +74,16 @@ To see the various versions
 
 
 
+__PROBLEMS ENCOUNTERED__
 
+Upon deploying Jenkins via helm, it worked smoothly. However, the deployment of Artifactory pods using helm encountered an issue. The "router" init pod remained stuck in a "podinitializing" state, while the posegresql pod was functioning properly.
+
+![](./images/eee.PNG)
+
+__Resolution__
+
+Upon investigation, I discovered that Artifactory requires a minimum of __4 CPU cores and 8 GB of RAM per Artifactory node__. To address this, I made adjustments to the __instance type__ in the __terraform.tfvars__ file, upgrading it from __t3.small__, __t2.small__ to __t3.xlarge__,__t2.xlarge__ respectively.
+__i.e__
+
+`asg_instance_types             = [{ instance_type = "t3.xlarge" }, { instance_type = "t2.xlarge" }, ]`
 
