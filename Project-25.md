@@ -71,10 +71,37 @@ If output is returned, then you already have an __IAM OIDC__ provider for your c
 
 __Create your Amazon EBS CSI plugin IAM role with the AWS CLI__
 
-- View your cluster's OIDC provider URL. If the output from the command is None, review [__IAM Role Setup__ and ____Create an __IAM OIDC provider__ for your cluster using the AWS CLI.__](#__IAM Role Setup__).
+- View your cluster's OIDC provider URL. If the output from the command is None, review __IAM Role Setup__ and __Create an __IAM OIDC provider__ for your cluster using the AWS CLI.__ above.
 
 
-aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text
+`$ aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text`
+
+- Create the IAM role, granting the __AssumeRoleWithWebIdentity__ action.
+
+Create a file __aws-ebs-csi-driver-trust-policy.json__ and copy the following content to the file.
+
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws-us-gov:iam::9398-9595-4199:oidc-provider/oidc.eks.us-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:aud": "sts.amazonaws.com",
+          "oidc.eks.us-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:sub": "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+        }
+      }
+    }
+  ]
+}
+```
+
+ 
 
 
 
