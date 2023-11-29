@@ -27,7 +27,7 @@ In this project, the requirement is to use Jfrog Artifactory as a private regist
 __Deploy Jfrog Artifactory into Kubernetes__
 
 
-First, we bring up the EKS cluster from the previous project. See [Project-24](https://github.com/dybran/Project-24/blob/main/Project-24.md).
+First, we bring up the Kubernetes cluster. See [Project-22](https://github.com/dybran/Project-22/blob/main/Project-22.md) to set up __eksctl__.
 
 Create kubeconfig file using awscli and connect to the kubectl.
 
@@ -38,6 +38,10 @@ Create a namespace __tools__ where all the DevOps tools will be deployed. We wil
 `$ kubectl create ns tools`
 
 ![](./images/cr.PNG)
+
+__Create and EBS-CSI Driver for the Cluster__
+
+
 
 The best approach to easily get Artifactory into kubernetes is to use helm.
 
@@ -82,8 +86,8 @@ Upon deploying Jenkins via helm, it worked smoothly. However, the deployment of 
 
 __Resolution__
 
-Upon investigation, I discovered that Artifactory requires more __storage volume__. To address this, I made adjustments to the __storage volume__ in the __local.tf__ file, upgrading __volume_size__ from __10 GB__ to __80GB__.
-__i.e__
+Upon investigation, I discovered that Artifactory requires more __storage volume__. 
 
-`volume_size           = 80`
+To address this, I increased the __storage volume__ of the node instances, upgrading __volume size__ from __10 GB__ to __80GB__.
+
 
