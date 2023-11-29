@@ -41,18 +41,36 @@ Create a namespace __tools__ where all the DevOps tools will be deployed. We wil
 
 __Create and EBS-CSI Driver for the Cluster__
 
-For this project we will go through the process of Dynamic Provisioning - Automatically create EBS volumes and associated PersistentVolumes (PV) from PersistentVolumeClaims (PVC). Parameters can be passed via a StorageClass for fine-grained control over volume creation.
+An EBS CSI driver is a crucial component in a Kubernetes cluster that utilizes Amazon Elastic Block Store (EBS) for persistent storage. It enables seamless integration between Kubernetes and EBS, allowing for dynamic provisioning, management, and lifecycle control of EBS volumes for containerized applications.
+
+Here are the key reasons why an EBS CSI driver is essential for a Kubernetes cluster:
+
+1. **Dynamic Provisioning:** The EBS CSI driver eliminates the need for manual EBS volume creation and configuration, enabling dynamic provisioning of EBS volumes directly within Kubernetes. This streamlines the storage provisioning process and reduces administrative overhead.
+
+2. **Automated Attachment:** The EBS CSI driver automatically attaches and detaches EBS volumes to the appropriate Kubernetes nodes based on pod scheduling. This ensures that containers have access to the required storage without manual intervention.
+
+3. **Volume Lifecycle Management:** The EBS CSI driver manages the entire lifecycle of EBS volumes, including creation, deletion, resizing, and snapshotting. This provides a unified approach to storage management within Kubernetes.
+
+4. **Simplified Storage Management:** The EBS CSI driver simplifies storage management in Kubernetes by decoupling the storage interface from the Kubernetes controller manager. This allows for more efficient storage management and reduces the complexity of the Kubernetes control plane.
+
+5. **Enhanced Storage Flexibility:** The EBS CSI driver supports a variety of EBS volume configurations, including different volume types, sizes, and performance options. This provides greater flexibility in tailoring storage to specific application requirements.
+
+6. **Integration with Kubernetes Ecosystem:** The EBS CSI driver is fully integrated with the Kubernetes ecosystem, including Kubernetes PersistentVolumes, PersistentVolumeClaims, and StorageClasses. This allows for seamless integration with existing Kubernetes storage workflows.
+
+Overall, the EBS CSI driver plays a critical role in enabling Kubernetes clusters to effectively leverage EBS for persistent storage. It simplifies storage management, automates volume lifecycle operations, and enhances storage flexibility, making it an indispensable tool for Kubernetes environments.
+
+Install EBS CSI Driver
 
 __IAM Role Setup__
 
-Create an __IAM role__ with the necessary permissions for the EBS CSI Driver to interact with EBS volumes. The Amazon EBS CSI plugin requires IAM permissions to make calls to AWS APIs on your behalf. The The example policy can be used to define the required permissions. Additionally, AWS provides a managed policy at ARN __arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy__ which we will make use here.
+Create an __IAM role__ with the necessary permissions for the EBS CSI Driver to interact with EBS volumes. The Amazon EBS CSI plugin requires IAM permissions to make calls to AWS APIs on your behalf. The The example policy can be used to define the required permissions. Additionally, AWS provides a managed policy at ARN __arn:aws-us-gov:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy__ which we will make use here.
 
 __Create an __IAM OIDC provider__ for your cluster using the AWS CLI.__
 
-- Determine the OIDC issuer ID for your cluster; Retrieve your cluster's OIDC issuer ID and store it in a variable. Replace my-cluster with your own value.
+- Determine the OIDC issuer ID for your cluster; Retrieve your cluster's OIDC issuer ID and store it in a variable.
 
 ```
-$ cluster_name=dybran-eks-tooling
+cluster_name=dybran-eks-tooling
 
 oidc_id=$(aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)
 
@@ -87,7 +105,7 @@ Create a file __aws-ebs-csi-driver-trust-policy.json__ and copy the following co
     {
       "Effect": "Allow",
       "Principal": {
-        "Federated": "arn:aws-us-gov:iam::9398-9595-4199:oidc-provider/oidc.eks.us-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
+        "Federated": "arn:aws-us-gov:iam::939895954199:oidc-provider/oidc.eks.us-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
       },
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
@@ -101,11 +119,40 @@ Create a file __aws-ebs-csi-driver-trust-policy.json__ and copy the following co
 }
 ```
 
- 
+Create the role __EBS_CSI_DriverRole__
 
+```
+aws iam create-role \
+  --role-name EBS_CSI_DriverRole \
+  --assume-role-policy-document file://"aws-ebs-csi-driver-trust-policy.json"
+```
 
+You can attach a policy to your AWS setup in two ways:
+ - By using an AWS managed policy 
 
-####
+OR
+
+- By crafting your own custom policy.
+
+Should your cluster exist in the __AWS GovCloud (US-East)__ or __AWS GovCloud (US-West)__ regions, substitute __"arn:aws:"__ with __"arn:aws-us-gov:"__.
+
+To connect the AWS managed policy to the role
+
+```
+aws iam attach-role-policy \
+  --policy-arn arn:aws-us-gov:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+  --role-name EBS_CSI_DriverRole
+```
+__Managing the Amazon EBS CSI driver as an Amazon EKS add-on__
+To add the __Amazon EBS CSI add-on__ using the __AWS CLI__
+
+Run the following command
+
+```
+aws eks create-addon --cluster-name $cluster_name --addon-name aws-ebs-csi-driver \
+  --service-account-role-arn arn:aws-us-gov:iam::939895954199:role/EBS_CSI_DriverRole
+```
+__Installing the tools in kubernetes__
 
 The best approach to easily get Artifactory into kubernetes is to use helm.
 
