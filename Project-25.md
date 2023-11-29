@@ -41,7 +41,44 @@ Create a namespace __tools__ where all the DevOps tools will be deployed. We wil
 
 __Create and EBS-CSI Driver for the Cluster__
 
+For this project we will go through the process of Dynamic Provisioning - Automatically create EBS volumes and associated PersistentVolumes (PV) from PersistentVolumeClaims (PVC). Parameters can be passed via a StorageClass for fine-grained control over volume creation.
 
+__IAM Role Setup__
+
+Create an __IAM role__ with the necessary permissions for the EBS CSI Driver to interact with EBS volumes. The Amazon EBS CSI plugin requires IAM permissions to make calls to AWS APIs on your behalf. The The example policy can be used to define the required permissions. Additionally, AWS provides a managed policy at ARN __arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy__ which we will make use here.
+
+__Create an __IAM OIDC provider__ for your cluster using the AWS CLI.__
+
+- Determine the OIDC issuer ID for your cluster; Retrieve your cluster's OIDC issuer ID and store it in a variable. Replace my-cluster with your own value.
+
+```
+$ cluster_name=dybran-eks-tooling
+
+oidc_id=$(aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)
+
+echo $oidc_id
+```
+
+- Determine whether an IAM OIDC provider with your cluster's issuer ID is already in your account.
+
+`aws iam list-open-id-connect-providers | grep $oidc_id | cut -d "/" -f4`
+
+If output is returned, then you already have an __IAM OIDC__ provider for your cluster and you can skip the next step. If no output is returned, then you must create an __IAM OIDC__ provider for your cluster.
+
+- Create an IAM OIDC identity provider for your cluster with the following command.
+
+`eksctl utils associate-iam-oidc-provider --cluster $cluster_name --approve`
+
+__Create your Amazon EBS CSI plugin IAM role with the AWS CLI__
+
+- View your cluster's OIDC provider URL. If the output from the command is None, review [__IAM Role Setup__ and ____Create an __IAM OIDC provider__ for your cluster using the AWS CLI.__](#__IAM Role Setup__).
+
+
+aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text
+
+
+
+####
 
 The best approach to easily get Artifactory into kubernetes is to use helm.
 
