@@ -61,97 +61,108 @@ Overall, the EBS CSI driver plays a critical role in enabling Kubernetes cluster
 
 Install EBS CSI Driver
 
-__IAM Role Setup__
+Check the link to setuo the [__EBS CSI add-on__](https://docs.aws.amazon.com/eks/latest/userguide/managing-ebs-csi.html)
 
-Create an __IAM role__ with the necessary permissions for the EBS CSI Driver to interact with EBS volumes. The Amazon EBS CSI plugin requires IAM permissions to make calls to AWS APIs on your behalf. The The example policy can be used to define the required permissions. Additionally, AWS provides a managed policy at ARN __arn:aws-us-gov:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy__ which we will make use here.
+Start the cluster.
 
-__Create an __IAM OIDC provider__ for your cluster using the AWS CLI.__
+Use this command to check the necessary platform version.
 
-- Determine the OIDC issuer ID for your cluster; Retrieve your cluster's OIDC issuer ID and store it in a variable.
+`$ aws eks describe-addon-versions --addon-name aws-ebs-csi-driver`
+
+![](./images/1.PNG)
+
+An existing AWS Identity and Access Management (IAM) OpenID Connect (OIDC) provider for your cluster. To determine whether you already have one, or to create one.
+Your cluster has an OpenID Connect (OIDC) issuer URL associated with it. To use AWS Identity and Access Management (IAM) roles for service accounts, an IAM OIDC provider must exist for your cluster's OIDC issuer URL.
+
+You can create an IAM OIDC provider for your cluster using __eksctl or the AWS Management Console__.
+
+__To create an IAM OIDC identity provider for your cluster with eksctl__
+
+Determine the OIDC issuer ID for your cluster.
+
+Retrieve your cluster's OIDC issuer ID and store it in a variable.
+
+`$ cluster_name=dybran-eks-tooling`
+
+`$ oidc_id=$(aws eks describe-cluster --name $cluster_name --region us-west-1 --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)`
+
+`$ echo $oidc_id`
+
+![](./images/2.PNG)
+![](./images/3.PNG)
+
+Determine whether an IAM OIDC provider with your cluster's issuer ID is already in your account
+
+`$ aws iam list-open-id-connect-providers | grep $oidc_id | cut -d "/" -f4`
+
+If output is returned, then you already have an IAM OIDC provider for your cluster and you can skip the next step. If no output is returned, then you must create an IAM OIDC provider for your cluster.
+
+In this case, no output was returned.
+
+![](./images/4.PNG)
+
+Create an IAM OIDC identity provider for your cluster with the following command
+
+`$ eksctl utils associate-iam-oidc-provider --cluster $cluster_name --region us-west-1 --approve`
+
+![](./images/5.PNG)
+
+__Configuring a Kubernetes service account to assume an IAM role__
+
+Create a file __aws-ebs-csi-driver-trust-policy.json__ that includes the permissions for the AWS services
 
 ```
-cluster_name=dybran-eks-tooling
-
-oidc_id=$(aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)
-
-echo $oidc_id
-```
-
-- Determine whether an IAM OIDC provider with your cluster's issuer ID is already in your account.
-
-`aws iam list-open-id-connect-providers | grep $oidc_id | cut -d "/" -f4`
-
-If output is returned, then you already have an __IAM OIDC__ provider for your cluster and you can skip the next step. If no output is returned, then you must create an __IAM OIDC__ provider for your cluster.
-
-- Create an IAM OIDC identity provider for your cluster with the following command.
-
-`eksctl utils associate-iam-oidc-provider --cluster $cluster_name --approve`
-
-__Create your Amazon EBS CSI plugin IAM role with the AWS CLI__
-
-- View your cluster's OIDC provider URL. If the output from the command is None, review __IAM Role Setup__ and __Create an __IAM OIDC provider__ for your cluster using the AWS CLI.__ above.
-
-
-`$ aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text`
-
-- Create the IAM role, granting the __AssumeRoleWithWebIdentity__ action.
-
-Create a file __aws-ebs-csi-driver-trust-policy.json__ and copy the following content to the file.
-
-```
+cat >aws-ebs-csi-driver-trust-policy.json <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
       "Principal": {
-        "Federated": "arn:aws-us-gov:iam::939895954199:oidc-provider/oidc.eks.us-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE"
+        "Federated": "arn:aws:iam::939895954199:oidc-provider/oidc.eks.us-west-1.amazonaws.com/id/$oidc_id"
       },
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "oidc.eks.us-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:aud": "sts.amazonaws.com",
-          "oidc.eks.us-west-1.amazonaws.com/id/EXAMPLED539D4633E53DE1B71EXAMPLE:sub": "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+          "oidc.eks.us-west-1.amazonaws.com/id/$oidc_id:aud": "sts.amazonaws.com",
+          "oidc.eks.us-west-1.amazonaws.com/id/$oidc_id:sub": "system:serviceaccount:kube-system:ebs-csi-controller-sa"
         }
       }
     }
   ]
 }
+EOF
 ```
+Create the role. You can change __AmazonEKS_EBS_CSI_DriverRole__ to a different name. If you change it, make sure to change it in later steps.
 
-Create the role __EBS_CSI_DriverRole__
+`$ aws iam create-policy --policy-name aws-ebs-csi-driver-trust-policy --policy-document file://aws-ebs-csi-driver-trust-policy.json`
 
 ```
 aws iam create-role \
-  --role-name EBS_CSI_DriverRole \
+  --role-name AmazonEKS_EBS_CSI_DriverRole \
   --assume-role-policy-document file://"aws-ebs-csi-driver-trust-policy.json"
 ```
 
-You can attach a policy to your AWS setup in two ways:
- - By using an AWS managed policy 
-
-OR
-
-- By crafting your own custom policy.
-
-Should your cluster exist in the __AWS GovCloud (US-East)__ or __AWS GovCloud (US-West)__ regions, substitute __"arn:aws:"__ with __"arn:aws-us-gov:"__.
-
-To connect the AWS managed policy to the role
+Attach a policy. AWS maintains an AWS managed policy or you can create your own custom policy. Attach the AWS managed policy to the role.
 
 ```
 aws iam attach-role-policy \
-  --policy-arn arn:aws-us-gov:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-  --role-name EBS_CSI_DriverRole
+  --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+  --role-name AmazonEKS_EBS_CSI_DriverRole
 ```
-__Managing the Amazon EBS CSI driver as an Amazon EKS add-on__
-To add the __Amazon EBS CSI add-on__ using the __AWS CLI__
+![](./images/6.PNG)
 
-Run the following command
+Managing the Amazon EBS CSI driver as an Amazon EKS add-on
+To add the Amazon EBS CSI add-on using the AWS CLI
+
+Run the following command.
 
 ```
-aws eks create-addon --cluster-name $cluster_name --addon-name aws-ebs-csi-driver \
-  --service-account-role-arn arn:aws-us-gov:iam::939895954199:role/EBS_CSI_DriverRole
+$ aws eks create-addon --cluster-name $cluster_name --addon-name aws-ebs-csi-driver \
+  --service-account-role-arn arn:aws:iam::939895954199:role/AmazonEKS_EBS_CSI_DriverRole --region us-west-1
 ```
+![](./images/7.PNG)
+
 __Installing the tools in kubernetes__
 
 The best approach to easily get Artifactory into kubernetes is to use helm.
@@ -178,7 +189,7 @@ Install artifactory in the namespace __tools__
 `$ helm upgrade --install artifactory jfrog/artifactory --version 107.71.4 -n tools`
 
 ![](./images/ar.PNG)
-![](./images/ar1.PNG)
+![](./images/9.PNG)
 
 We opted for the `upgrade --install` flag over `helm install artifactory jfrog/artifactory` for enhanced best practices, especially in CI pipeline development for helm deployments. This approach guarantees that helm performs an upgrade if an installation exists. In the absence of an existing installation, it conducts the initial install. This strategy assures a fail-safe command; it intelligently discerns whether an upgrade or a fresh installation is needed, preventing failures.
 
