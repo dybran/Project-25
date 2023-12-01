@@ -133,7 +133,9 @@ cat >aws-ebs-csi-driver-trust-policy.json <<EOF
 }
 EOF
 ```
-Create the role. You can change __AmazonEKS_EBS_CSI_DriverRole__ to a different name.
+This trust policy essentially allows the EBS CSI driver to assume the role associated with the specified OIDC provider and access AWS resources on behalf of the EBS CSI controller service account
+
+Create the role - __AmazonEKS_EBS_CSI_DriverRole__
 
 ```
 aws iam create-role \
@@ -219,8 +221,10 @@ Upon deploying Jenkins via helm, it worked smoothly. However, the deployment of 
 
 __Resolution__
 
-Upon investigation, I discovered that Artifactory requires more __storage volume__. 
+- Upon investigation, I discovered that Artifactory requires more __storage volume__. 
 
 To address this, I increased the __storage volume__ of the node instances, upgrading __volume size__ from __10 GB__ to __80GB__.
+
+- While setting up the EBS CSI driver, I had to specify the region of the cluster
 
 
