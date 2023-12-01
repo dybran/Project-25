@@ -219,18 +219,8 @@ To see the various versions
 
 
 
-__PROBLEMS ENCOUNTERED__
+__N/B__
 
-Upon deploying Jenkins via helm, it worked smoothly. However, the deployment of Artifactory pods using helm encountered an issue. The "router" init pod remained stuck in a __"podinitializing"__ state, while the posegresql pod was functioning properly.
-
-![](./images/eee.PNG)
-
-__Resolution__
-
-- Upon investigation, I discovered that Artifactory requires more __storage volume__. 
-
-To address this, I increased the __storage volume__ of the node instances, upgrading __volume size__ from __10 GB__ to __80GB__.
-
-- While setting up the EBS CSI driver, I had to specify the region of the cluster
+While setting up the EBS CSI driver, I had to specify the region of the cluster.
 
 
