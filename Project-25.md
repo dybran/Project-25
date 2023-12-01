@@ -173,6 +173,12 @@ __Installing the tools in kubernetes__
 
 Install jenkins in the namespace __tools__ using helm
 
+Search for an official helm chart for jenkins on [Artifact Hub](https://artifacthub.io/).
+
+`$ helm repo add jenkins https://charts.jenkins.io`
+
+`$ helm repo update`
+
 `$ helm upgrade --install jenkins jenkins/jenkins -n tools`
 
 ![](./images/8.PNG)
