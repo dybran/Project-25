@@ -133,9 +133,7 @@ cat >aws-ebs-csi-driver-trust-policy.json <<EOF
 }
 EOF
 ```
-Create the role. You can change __AmazonEKS_EBS_CSI_DriverRole__ to a different name. If you change it, make sure to change it in later steps.
-
-`$ aws iam create-policy --policy-name aws-ebs-csi-driver-trust-policy --policy-document file://aws-ebs-csi-driver-trust-policy.json`
+Create the role. You can change __AmazonEKS_EBS_CSI_DriverRole__ to a different name.
 
 ```
 aws iam create-role \
@@ -163,7 +161,19 @@ $ aws eks create-addon --cluster-name $cluster_name --addon-name aws-ebs-csi-dri
 ```
 ![](./images/7.PNG)
 
+Run the command 
+
+`$ kubectl get pods -n kube-system`
+
+![](./images/11.PNG)
+
 __Installing the tools in kubernetes__
+
+Install jenkins in the namespace __tools__ using helm
+
+`$ helm upgrade --install jenkins jenkins/jenkins -n tools`
+
+![](./images/8.PNG)
 
 The best approach to easily get Artifactory into kubernetes is to use helm.
 
@@ -190,6 +200,7 @@ Install artifactory in the namespace __tools__
 
 ![](./images/ar.PNG)
 ![](./images/9.PNG)
+![](./images/10.PNG)
 
 We opted for the `upgrade --install` flag over `helm install artifactory jfrog/artifactory` for enhanced best practices, especially in CI pipeline development for helm deployments. This approach guarantees that helm performs an upgrade if an installation exists. In the absence of an existing installation, it conducts the initial install. This strategy assures a fail-safe command; it intelligently discerns whether an upgrade or a fresh installation is needed, preventing failures.
 
