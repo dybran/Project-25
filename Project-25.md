@@ -314,7 +314,7 @@ If you attempt to apply the specified YAML configuration for the ingress resourc
 Unlike various controllers running as part of the kube-controller-manager—like the __Node Controller, Replica Controller, Deployment Controller, Job Controller, or Cloud Controller—Ingress controllers__ don't initiate automatically with the cluster.
 Kubernetes officially supports and maintains __AWS, GCE, and NGINX ingress controllers__. However, numerous other 3rd-party Ingress controllers exist, offering similar functionalities alongside their distinct features. Among these, the officially supported ones include:
 
-- {AKS Application Gateway Ingress Controller (Microsoft Azure)](https://learn.microsoft.com/en-gb/azure/application-gateway/tutorial-ingress-controller-add-on-existing)
+- [AKS Application Gateway Ingress Controller (Microsoft Azure)](https://learn.microsoft.com/en-gb/azure/application-gateway/tutorial-ingress-controller-add-on-existing)
 - [Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/kubernetes-ingress/)
 - [Traefik](https://doc.traefik.io/traefik/providers/kubernetes-ingress/)
 - [Ambassador](https://www.getambassador.io/)
