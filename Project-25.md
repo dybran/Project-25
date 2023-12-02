@@ -280,7 +280,7 @@ To illustrate, here is a straightforward example where an Ingress directs all it
 
 ![](./images/20.PNG)
 
-An ingress resource for Artifactory would looklike this
+An ingress resource for Artifactory would look like this
 
 ```
 apiVersion: networking.k8s.io/v1
@@ -308,7 +308,7 @@ spec:
 - Ingress frequently uses annotations to configure some options depending on the Ingress controller.
 - Different Ingress controllers support different annotations. Therefore it is important to be up to date with the ingress controller's specific documentation to know what annotations are supported.
 - It is recommended to always specify the ingress class name with the spec __ingressClassName: nginx__. This is how the Ingress controller is selected, especially when there are multiple configured ingress controllers in the cluster.
-- The domain __dybran.com__ should be replaced with your own domain.
+- The domain __dybran.com__ should be replaced with your own domain which has already been purchased from domain providers and configured in AWS Route53.
 
 If you attempt to apply the specified YAML configuration for the ingress resource without an ingress controller, it won't function. For the Ingress resource to operate, the cluster must have an active ingress controller.
 Unlike various controllers running as part of the kube-controller-manager—like the __Node Controller, Replica Controller, Deployment Controller, Job Controller, or Cloud Controller—Ingress controllers__ don't initiate automatically with the cluster.
