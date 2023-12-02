@@ -165,6 +165,8 @@ Run the command
 
 __Installing the tools in kubernetes__
 
+The best approach to easily get tools into kubernetes is to use helm.
+
 Install jenkins in the namespace __tools__ using helm
 
 Search for an official helm chart for jenkins on [Artifact Hub](https://artifacthub.io/).
@@ -177,7 +179,7 @@ Search for an official helm chart for jenkins on [Artifact Hub](https://artifact
 
 ![](./images/8.PNG)
 
-The best approach to easily get Artifactory into kubernetes is to use helm.
+Install artifactory in the namespace __tools__
 
 Search for an official helm chart for Artifactory on [Artifact Hub](https://artifacthub.io/).
 
@@ -202,7 +204,7 @@ Install artifactory in the namespace __tools__
 
 ![](./images/ar.PNG)
 ![](./images/9.PNG)
-![](./images/10.PNG)
+
 
 We opted for the `upgrade --install` flag over `helm install artifactory jfrog/artifactory` for enhanced best practices, especially in CI pipeline development for helm deployments. This approach guarantees that helm performs an upgrade if an installation exists. In the absence of an existing installation, it conducts the initial install. This strategy assures a fail-safe command; it intelligently discerns whether an upgrade or a fresh installation is needed, preventing failures.
 
@@ -210,6 +212,180 @@ To see the various versions
 
 ![](./images/see1.PNG)
 ![](./images/see2.PNG)
+
+__Getting the Artifactory URL__
+
+The artifactory helm chart comes bundled with the Artifactory software, a __PostgreSQL database__ and __an Nginx proxy__ which it uses to configure routes to the different capabilities of Artifactory. Getting the pods after some time, you should see something like the below.
+
+![](./images/10.PNG)
+
+Each of the deployed application have their respective services. This is how you will be able to reach either of them.
+
+Notice that, the Nginx Proxy has been configured to use the service type of LoadBalancer. Therefore, to reach Artifactory, we will need to go through the Nginx proxy's service. Which happens to be a load balancer created in the cloud provider.
+
+`$ kubectl get svc -n tools`
+
+![](./images/12.PNG)
+
+Accessing the artifactory using the Load balancer URL
+
+![](./images/13.PNG)
+
+Login using default 
+
+__username__: admin
+
+__password__: password
+
+![](./images/14.PNG)
+
+__How the Nginx URL for Artifactory is configured in Kubernetes__
+
+How did Helm configure the URL in kubernetes?
+
+Helm uses the __values.yaml__ file to set every single configuration that the chart has the capability to configure. The best place to get started with an off the shelve chart from __artifacthub.io__ is to get familiar with the __DEFAULT VALUES__ section on Artifact hub.
+
+![](./images/15.PNG)
+
+Explore key and value pairs within the system.
+
+For instance, entering "__nginx__" into the search bar will display all the configured options for the nginx proxy. Choosing "__nginx.enabled__" from the list will promptly navigate you to the corresponding configuration in the YAML file.
+
+![](./images/16.PNG)
+
+Search for __nginx.service__ and choose __nginx.service.type__. This will display the configured Kubernetes service type for Nginx. By default, it appears as LoadBalancer.
+
+![](./images/17.PNG)
+![](./images/18.PNG)
+
+To work directly with the values.yaml file, you can download the file locally by clicking on the download icon.
+
+![](./images/19.PNG)
+
+__Ingress controller__
+
+Configuring applications in Kubernetes to be externally accessible often begins with setting the service type to a __Load Balancer__. However, this can lead to escalating expenses and complex management as the number of applications grows, resulting in a multitude of provisioned load balancers.
+
+An optimal solution lies in leveraging Kubernetes Ingress instead, as detailed in [Kubernetes Ingress documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/). Yet, this transition requires deploying an [__Ingress Controller__](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/).
+
+One major advantage of employing an Ingress controller is its __ability to utilize a single load balancer across various deployed applications__. This consolidation allows for the reuse of the load balancer by services like Artifactory and other tools. Consequently, it significantly reduces cloud expenditure and minimizes the overhead associated with managing multiple load balancers, a topic we'll delve deeper into shortly.
+
+For now, we will leave artifactory, move on to the next phase of configuration (Ingress, DNS(Route53) and Cert Manager), and then return to Artifactory to complete the setup so that it can serve as a private docker registry and repository for private helm charts.
+
+__Deploying Ingress Controller and managing Ingress Resources__
+
+An ingress in Kubernetes is an API object responsible for overseeing external access to services within the cluster. It handles tasks like load balancing, SSL termination, and name-based virtual hosting. Essentially, an Ingress facilitates the exposure of HTTP and HTTPS routes from outside the cluster to services within cluster. Traffic direction is managed by rules set within the Ingress resource.
+
+To illustrate, here is a straightforward example where an Ingress directs all its traffic to a single Service
+
+![](./images/20.PNG)
+
+An ingress resource for Artifactory would looklike this
+
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: artifactory
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "tooling.artifactory.sandbox.svc.dybran.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: artifactory
+            port:
+              number: 8082
+
+```
+
+- An Ingress needs __apiVersion, kind, metadata__ and __spec__ fields
+- The name of an Ingress object must be a valid DNS subdomain name
+- Ingress frequently uses annotations to configure some options depending on the Ingress controller.
+- Different Ingress controllers support different annotations. Therefore it is important to be up to date with the ingress controller's specific documentation to know what annotations are supported.
+- It is recommended to always specify the ingress class name with the spec __ingressClassName: nginx__. This is how the Ingress controller is selected, especially when there are multiple configured ingress controllers in the cluster.
+- The domain __dybran.com__ should be replaced with your own domain.
+
+If you attempt to apply the specified YAML configuration for the ingress resource without an ingress controller, it won't function. For the Ingress resource to operate, the cluster must have an active ingress controller.
+Unlike various controllers running as part of the kube-controller-manager—like the __Node Controller, Replica Controller, Deployment Controller, Job Controller, or Cloud Controller—Ingress controllers__ don't initiate automatically with the cluster.
+Kubernetes officially supports and maintains __AWS, GCE, and NGINX ingress controllers__. However, numerous other 3rd-party Ingress controllers exist, offering similar functionalities alongside their distinct features. Among these, the officially supported ones include:
+
+- {AKS Application Gateway Ingress Controller (Microsoft Azure)](https://learn.microsoft.com/en-gb/azure/application-gateway/tutorial-ingress-controller-add-on-existing)
+- [Istio](https://istio.io/latest/docs/tasks/traffic-management/ingress/kubernetes-ingress/)
+- [Traefik](https://doc.traefik.io/traefik/providers/kubernetes-ingress/)
+- [Ambassador](https://www.getambassador.io/)
+- [HA Proxy Ingress](https://haproxy-ingress.github.io/)
+- [Kong](https://docs.konghq.com/kubernetes-ingress-controller/latest/)
+- [Gloo](https://docs.solo.io/gloo-edge/latest/)
+
+While there are more 3rd-party Ingress controllers available, the aforementioned ones are currently backed and maintained by Kubernetes. A [comparison matrix](https://kubevious.io/blog/post/comparing-top-ingress-controllers-for-kubernetes#comparison-matrix) of these controllers can assist in understanding their unique traits, aiding businesses in choosing the right fit for their requirements.
+In a cluster, it's feasible to deploy multiple ingress controllers, thanks to the essence of an ingress class. By specifying the `spec ingressClassName` field on the ingress object, the appropriate ingress controller will be utilized by the ingress resource.
+
+__Deploy Nginx Ingress Controller__
+
+We will deploy and use the Nginx Ingress Controller. It is always the default choice when starting with Kubernetes projects. It is reliable and easy to use.
+Since this controller is maintained by Kubernetes, there is an official guide the installation process. Hence, we wont be using artifacthub.io here. Even though you can still find ready to go charts there, it just makes sense to always use the [__official guide__](https://kubernetes.github.io/ingress-nginx/deploy/) in this scenario.
+
+Using the Helm approach, according to the official guide;
+
+- Install Nginx Ingress Controller in the ingress-nginx namespace
+
+```
+helm upgrade --install ingress-nginx ingress-nginx \
+  --repo https://kubernetes.github.io/ingress-nginx \
+  --namespace ingress-nginx --create-namespace
+
+```
+This command is idempotent. It installs the ingress controller if it is not already present. However, if the ingress controller is already installed, it will perform an upgrade instead.
+
+We can also install the ingress-nginx using the same approach used in installing jenkins and artifactory.
+
+Create a name space __ingress-nginx__
+
+`$ kubectl create ns ingress-nginx`
+
+Search for an official helm chart for ingress-nginx on [Artifact Hub](https://artifacthub.io/).
+
+`$ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx`
+
+Update repo
+
+`$ helm repo update`
+
+Install ingress-nginx
+
+`$ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx --version 4.8.3 -n ingress-nginx`
+
+![](./images/21.PNG)
+
+Get pods in the __ingress-nginx__ namespace
+
+`$ kubectl get pods -n ingress-nginx -w`
+
+![](./images/22.PNG)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
