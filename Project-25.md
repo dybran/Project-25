@@ -1,9 +1,9 @@
 ## __Deploying and Packaging Applications into Kubernetes with Helm__
 
 
-In [Project-24](https://github.com/dybran/Project-24/blob/main/Project-24.md), we gained hands-on experience with Helm, utilizing it to deploy applications on Kubernetes.
+In [Project-24](https://github.com/dybran/Project-24/blob/main/Project-24.md), we acquired practical skills in using Helm to deploy applications on Kubernetes.
 
-In this new project, our aim is to deploy a range of DevOps tools, gaining familiarity with common real-world challenges encountered during such deployments and learning how to troubleshoot them effectively. We will delve into modifying Helm values files to automate application configurations. As we progressively deploy various DevOps tools, we will engage with them, understanding their role within the DevOps cycle and their integration into the broader ecosystem.
+Now, in this project, we are focusing on deploying a suite of DevOps tools. Our goal is to confront and understand the typical challenges faced in real-world deployments while mastering effective troubleshooting strategies. We will explore the customization of Helm values files to automate application setups. Throughout the process of deploying different DevOps tools, we'll actively interact with them, comprehending their place in the DevOps lifecycle and how they integrate into the larger ecosystem.
 
 Our primary focus will be on:
 
@@ -27,7 +27,7 @@ In this project, the requirement is to use Jfrog Artifactory as a private regist
 __Deploy Jfrog Artifactory into Kubernetes__
 
 
-First, we bring up the Kubernetes cluster. See [Project-22](https://github.com/dybran/Project-22/blob/main/Project-22.md) to set up __eksctl__.
+First, we provision the kubernetes cluster using __eksctl__. See [Project-22](https://github.com/dybran/Project-22/blob/main/Project-22.md).
 
 Create kubeconfig file using awscli and connect to the kubectl.
 
@@ -39,9 +39,9 @@ Create a namespace __tools__ where all the DevOps tools will be deployed. We wil
 
 ![](./images/cr.PNG)
 
-__Create and EBS-CSI Driver for the Cluster__
+__Create EBS-CSI Driver for the Cluster__
 
-An EBS CSI driver is a crucial component in a Kubernetes cluster that utilizes Amazon Elastic Block Store (EBS) for persistent storage. It enables seamless integration between Kubernetes and EBS, allowing for dynamic provisioning, management, and lifecycle control of EBS volumes for containerized applications.
+An __EBS CSI driver__ is a crucial component in a Kubernetes cluster that utilizes Amazon Elastic Block Store (EBS) for persistent storage. It enables seamless integration between Kubernetes and EBS, allowing for dynamic provisioning, management, and lifecycle control of EBS volumes for containerized applications.
 
 Here are the key reasons why an EBS CSI driver is essential for a Kubernetes cluster:
 
@@ -59,11 +59,9 @@ Here are the key reasons why an EBS CSI driver is essential for a Kubernetes clu
 
 Overall, the EBS CSI driver plays a critical role in enabling Kubernetes clusters to effectively leverage EBS for persistent storage. It simplifies storage management, automates volume lifecycle operations, and enhances storage flexibility, making it an indispensable tool for Kubernetes environments.
 
-Install EBS CSI Driver
+__Installing EBS CSI Driver__
 
 Check the link to setuo the [__EBS CSI add-on__](https://docs.aws.amazon.com/eks/latest/userguide/managing-ebs-csi.html)
-
-Start the cluster.
 
 Use this command to check the necessary platform version.
 
@@ -71,10 +69,7 @@ Use this command to check the necessary platform version.
 
 ![](./images/1.PNG)
 
-An existing AWS Identity and Access Management (IAM) OpenID Connect (OIDC) provider for your cluster. To determine whether you already have one, or to create one.
-Your cluster has an OpenID Connect (OIDC) issuer URL associated with it. To use AWS Identity and Access Management (IAM) roles for service accounts, an IAM OIDC provider must exist for your cluster's OIDC issuer URL.
-
-You can create an IAM OIDC provider for your cluster using __eksctl or the AWS Management Console__.
+You might already have an AWS IAM OpenID Connect (OIDC) provider for your cluster. To confirm its existence or establish a new one, check the OIDC issuer URL linked to your cluster. An IAM OIDC provider is necessary for utilizing IAM roles with service accounts. You can set up an IAM OIDC provider for your cluster using either __eksctl or the AWS Management Console__.
 
 __To create an IAM OIDC identity provider for your cluster with eksctl__
 
@@ -152,8 +147,7 @@ aws iam attach-role-policy \
 ```
 ![](./images/6.PNG)
 
-Managing the Amazon EBS CSI driver as an Amazon EKS add-on
-To add the Amazon EBS CSI add-on using the AWS CLI
+To add the Amazon __EBS CSI add-on__ using the __AWS CLI__
 
 Run the following command.
 
