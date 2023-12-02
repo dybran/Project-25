@@ -290,7 +290,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "tooling.artifactory.sandbox.svc.dybran.com"
+  - host: "tooling.artifactory.dybran.com"
     http:
       paths:
       - path: /
