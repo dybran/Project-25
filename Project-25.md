@@ -342,6 +342,19 @@ helm upgrade --install ingress-nginx ingress-nginx \
 ```
 This command is idempotent. It installs the ingress controller if it is not already present. However, if the ingress controller is already installed, it will perform an upgrade instead.
 
+`$ kubectl get pods --namespace=ingress-nginx`
+
+The following command will wait for the ingress controller pod to be up, running, and ready
+
+```
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+
+```
+__OR__
+
 We can also install the ingress-nginx using the same approach used in installing jenkins and artifactory.
 
 Create a name space __ingress-nginx__
@@ -368,10 +381,55 @@ Get pods in the __ingress-nginx__ namespace
 
 ![](./images/22.PNG)
 
+Check to see the created load balancer in AWS.
 
 
+`$ kubectl get svc -n ingress-nginx`
 
+![](./images/23.PNG)
 
+The ingress-nginx-controller service that was created is of the type LoadBalancer. That will be the load balancer to be used by all applications which require external access, and is using this ingress controller.
+If you go ahead to AWS console, copy the address in the EXTERNAL-IP column, and search for the loadbalancer, you will see an output like below.
+
+![](./images/24.PNG)
+
+Check the IngressClass that identifies this ingress controller.
+
+`$ kubectl get ingressclass -n ingress-nginx`
+
+![](./images/25.PNG)
+
+__Deploy Artifactory Ingress__
+
+Now, it is time to configure the ingress so that we can route traffic to the Artifactory internal service, through the ingress controller's load balancer.
+
+![](./images/20.PNG)
+
+Notice the section with the configuration that selects the ingress controller using the __ingressClassName__
+
+Create the __ingress-nginx.yaml__ manifest
+```
+cat <<EOF > ingress-nginx.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: artifactory
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "tooling.artifactory.sandbox.svc.dybran.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: artifactory
+            port:
+              number: 8082
+EOF
+```
+![](./images/26.PNG)
 
 
 
