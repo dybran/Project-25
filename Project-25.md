@@ -290,7 +290,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "tooling.artifactory.dybran.com"
+  - host: "tooling.artifactory.svc.dybran.com"
     http:
       paths:
       - path: /
@@ -308,7 +308,7 @@ spec:
 - Ingress frequently uses annotations to configure some options depending on the Ingress controller.
 - Different Ingress controllers support different annotations. Therefore it is important to be up to date with the ingress controller's specific documentation to know what annotations are supported.
 - It is recommended to always specify the ingress class name with the spec __ingressClassName: nginx__. This is how the Ingress controller is selected, especially when there are multiple configured ingress controllers in the cluster.
-- The domain __dybran.com__ should be replaced with your own domain which has already been purchased from domain providers and configured in AWS Route53.
+- The domain __svc.dybran.com__ should be replaced with your own domain which has already been purchased from domain providers and configured in AWS Route53.
 
 If you attempt to apply the specified YAML configuration for the ingress resource without an ingress controller, it won't function. For the Ingress resource to operate, the cluster must have an active ingress controller.
 Unlike various controllers running as part of the kube-controller-manager—like the __Node Controller, Replica Controller, Deployment Controller, Job Controller, or Cloud Controller—Ingress controllers__ don't initiate automatically with the cluster.
@@ -407,9 +407,9 @@ Now, it is time to configure the ingress so that we can route traffic to the Art
 
 Notice the section with the configuration that selects the ingress controller using the __ingressClassName__
 
-Create the __ingress-nginx.yaml__ manifest
+Create the __artifactory-ingress.yaml__ manifest
 ```
-cat <<EOF > ingress-nginx.yaml
+cat <<EOF > artifactory-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -417,27 +417,67 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "tooling.artifactory.dybran.com"
+  - host: "tooling.artifactory.svc.dybran.com"
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: artifactory
+            name: artifactory-artifactory-nginx
             port:
               number: 8082
 EOF
 ```
-![](./images/26.PNG)
+Create the ingress resource in the __tools__ namespace
+
+`$ kubectl apply -f artifactory-ingress.yaml -n tools`
+
+Get the ingress resource
+
+`$ kubectl get ingress -n tools`
+
+![](./images/27.PNG)
+
+__Note:__
+
+__CLASS__ - The nginx controller class name nginx
+
+__HOSTS__ - The hostname to be used in the browser __tooling.artifactory.svc.dybran.com__
+
+__ADDRESS__ - The loadbalancer address that was created by the ingress controller
+
+__Configure DNS__
+
+When accessing the tool, sharing the lengthy load balancer address poses significant inconvenience. The ideal solution involves creating a DNS record that's easily readable by humans and capable of directing requests to the balancer. This exact configuration is set within the ingress object as host: __"tooling.artifactory.svc.dybran.com"__. However, without a corresponding DNS record, this host address cannot reach the load balancer.
+
+The __"svc.dybran.com"__ portion of the domain represents the configured __HOSTED ZONE__ in AWS. To enable this functionality, it's necessary to set up the Hosted Zone in the AWS console or include it as part of your infrastructure using tools like Terraform.
+
+Create hosted zone __svc.dybran.com__
+
+You must have purchased a domain name from a domain provider and configured the nameservers.
+
+![](./images/28.PNG)
 
 
+__Create Route53 record__
 
+To establish a Route53 record, navigate to the hosted zone where essential DNS records are managed. For Artifactory, let's configure a record directing to the load balancer of the ingress controller. You have two choices: utilize either the CNAME or AWS Alias method.
 
+If opting for the CNAME Method,
 
+- Choose the desired HOSTED ZONE.
+- Click on the __"Create Record"__ button to proceed.
 
+![](./images/29.PNG)
 
+Please verify the DNS record's successful propagation. Go to [DNS checker](https://dnschecker.org) and choose __CNAME__ to check the record. Make sure there are green ticks next to each location on the left-hand side. Please note that it may take some time for the changes to propagate.
 
+######![]()
+
+__AWS Alias Method__
+
+In the create record section, type in the record name, and toggle the alias button to enable an alias. An alias is of A DNS record type which basically routes directly to the load balancer. In the choose endpoint bar, select __Alias__ to Application and Classic Load Balancer.
 
 
 
