@@ -152,7 +152,7 @@ To add the Amazon __EBS CSI add-on__ using the __AWS CLI__
 Run the following command.
 
 ```
-$ aws eks create-addon --cluster-name $cluster_name --addon-name aws-ebs-csi-driver \
+aws eks create-addon --cluster-name $cluster_name --addon-name aws-ebs-csi-driver \
   --service-account-role-arn arn:aws:iam::939895954199:role/AmazonEKS_EBS_CSI_DriverRole --region us-west-1
 ```
 ![](./images/7.PNG)
