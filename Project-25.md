@@ -290,7 +290,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "tooling.artifactory.svc.dybran.com"
+  - host: "tooling.artifactory.dybran.com"
     http:
       paths:
       - path: /
@@ -308,7 +308,8 @@ spec:
 - Ingress frequently uses annotations to configure some options depending on the Ingress controller.
 - Different Ingress controllers support different annotations. Therefore it is important to be up to date with the ingress controller's specific documentation to know what annotations are supported.
 - It is recommended to always specify the ingress class name with the spec __ingressClassName: nginx__. This is how the Ingress controller is selected, especially when there are multiple configured ingress controllers in the cluster.
-- The domain __svc.dybran.com__ should be replaced with your own domain which has already been purchased from domain providers and configured in AWS Route53.
+- The domain __dybran.com__ should be replaced with your own domain which has already been purchased from domain providers and configured in AWS Route53.
+- __artifactory__ in the __backend__  field is the name of the artifactory service we already have running. 
 
 If you attempt to apply the specified YAML configuration for the ingress resource without an ingress controller, it won't function. For the Ingress resource to operate, the cluster must have an active ingress controller.
 Unlike various controllers running as part of the kube-controller-manager—like the __Node Controller, Replica Controller, Deployment Controller, Job Controller, or Cloud Controller—Ingress controllers__ don't initiate automatically with the cluster.
@@ -417,7 +418,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: "tooling.artifactory.svc.dybran.com"
+  - host: "tooling.artifactory.dybran.com"
     http:
       paths:
       - path: /
@@ -443,17 +444,17 @@ __Note:__
 
 __CLASS__ - The nginx controller class name nginx
 
-__HOSTS__ - The hostname to be used in the browser __tooling.artifactory.svc.dybran.com__
+__HOSTS__ - The hostname to be used in the browser __tooling.artifactory.dybran.com__
 
 __ADDRESS__ - The loadbalancer address that was created by the ingress controller
 
 __Configure DNS__
 
-When accessing the tool, sharing the lengthy load balancer address poses significant inconvenience. The ideal solution involves creating a DNS record that's easily readable by humans and capable of directing requests to the balancer. This exact configuration is set within the ingress object as host: __"tooling.artifactory.svc.dybran.com"__. However, without a corresponding DNS record, this host address cannot reach the load balancer.
+When accessing the tool, sharing the lengthy load balancer address poses significant inconvenience. The ideal solution involves creating a DNS record that's easily readable by humans and capable of directing requests to the balancer. This exact configuration is set within the ingress object as host: __"tooling.artifactory.dybran.com"__. However, without a corresponding DNS record, this host address cannot reach the load balancer.
 
-The __"svc.dybran.com"__ portion of the domain represents the configured __HOSTED ZONE__ in AWS. To enable this functionality, it's necessary to set up the Hosted Zone in the AWS console or include it as part of your infrastructure using tools like Terraform.
+The __"dybran.com"__ portion of the domain represents the configured __HOSTED ZONE__ in AWS. To enable this functionality, it's necessary to set up the Hosted Zone in the AWS console or include it as part of your infrastructure using tools like Terraform.
 
-Create hosted zone __svc.dybran.com__
+Create hosted zone __dybran.com__
 
 You must have purchased a domain name from a domain provider and configured the nameservers.
 
