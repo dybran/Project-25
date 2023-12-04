@@ -29,6 +29,11 @@ __Deploy Jfrog Artifactory into Kubernetes__
 
 First, we provision the kubernetes cluster using __eksctl__. See [Project-22](https://github.com/dybran/Project-22/blob/main/Project-22.md).
 
+
+Create the cluster
+
+`$ eksctl create cluster --name dybran-eks-tooling --region us-west-1 --nodegroup-name worker --node-type t3.medium --nodes 2`
+
 Create kubeconfig file using awscli and connect to the kubectl.
 
 `$ aws eks update-kubeconfig --name dybran-eks-tooling --region us-west-1`
