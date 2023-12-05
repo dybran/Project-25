@@ -399,6 +399,10 @@ If you go ahead to AWS console, copy the address in the EXTERNAL-IP column, and 
 
 ![](./images/24.PNG)
 
+If you go ahead to AWS console, copy the address in the EXTERNAL-IP column, and search for the loadbalancer, you will see an output like below
+
+![](./images/asa.PNG)
+
 Check the IngressClass that identifies this ingress controller.
 
 `$ kubectl get ingressclass -n ingress-nginx`
@@ -432,7 +436,7 @@ spec:
           service:
             name: artifactory-artifactory-nginx
             port:
-              number: 8082
+              number: 80
 EOF
 ```
 Create the ingress resource in the __tools__ namespace
@@ -465,6 +469,10 @@ You must have purchased a domain name from a domain provider and configured the 
 
 ![](./images/28.PNG)
 
+Ensure that you utilize the Nameservers specified in the hosted zone to set up the Nameservers within your DNS provider, such as GoDaddy, Namecheap, and others.
+
+![](./images/aqqq.PNG)
+![](./images/aq.PNG)
 
 __Create Route53 record__
 
@@ -479,11 +487,32 @@ If opting for the CNAME Method,
 
 Please verify the DNS record's successful propagation. Go to [DNS checker](https://dnschecker.org) and choose __CNAME__ to check the record. Make sure there are green ticks next to each location on the left-hand side. Please note that it may take some time for the changes to propagate.
 
-######![]()
+![](./images/29-1.PNG)
+
+We can also check this using the command
+
+`$ nslookup -type=ns tooling.artifactory.dybran.com`
+
+#########![]()
 
 __AWS Alias Method__
 
 In the create record section, type in the record name, and toggle the alias button to enable an alias. An alias is of A DNS record type which basically routes directly to the load balancer. In the choose endpoint bar, select __Alias__ to Application and Classic Load Balancer.
+
+
+__Accessing the application from the browser__
+
+Accessing the application through your browser
+Presently, our Kubernetes-hosted application is reachable from outside sources. When you visit your domain's specific URL - __tooling.artifactorydybran.com__, the artifactory application should be accessible.
+
+If you use Chrome as your browser, you might encounter a message indicating that the site is reachable but considered insecure. This occurs when the site lacks a trusted TLS/SSL certificate or doesn't possess one at all.
+
+![](./images/30.PNG)
+
+The Nginx Ingress Controller sets up a default __TLS/SSL certificate__. However, it is self-signed and not recognized by browsers, which means it is not trusted. To verify this, click on the __"Not Secure"__ label on the browser.
+
+
+
 
 
 

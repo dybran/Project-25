@@ -14,4 +14,4 @@ spec:
           service:
             name: artifactory-artifactory-nginx
             port:
-              number: 8082
+              number: 80
