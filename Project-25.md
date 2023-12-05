@@ -91,7 +91,7 @@ Retrieve your cluster's OIDC issuer ID and store it in a variable.
 ![](./images/2.PNG)
 ![](./images/3.PNG)
 
-Determine whether an IAM OIDC provider with your cluster's issuer ID is already in your account
+Check if there's an IAM OIDC provider in your account that matches your cluster's issuer ID.
 
 `$ aws iam list-open-id-connect-providers | grep $oidc_id | cut -d "/" -f4`
 
@@ -493,7 +493,7 @@ We can also check this using the command
 
 `$ nslookup -type=ns tooling.artifactory.dybran.com`
 
-#########![]()
+![](./images/nsl.PNG)
 
 __AWS Alias Method__
 
@@ -511,7 +511,21 @@ If you use Chrome as your browser, you might encounter a message indicating that
 
 The Nginx Ingress Controller sets up a default __TLS/SSL certificate__. However, it is self-signed and not recognized by browsers, which means it is not trusted. To verify this, click on the __"Not Secure"__ label on the browser.
 
+__Explore Artifactory Web UI__
 
+Get the default username and password - Run a helm command to output the same message after the initial install
+
+`$ helm test artifactory -n tools`
+
+![](./images/tt.PNG)
+
+Insert the username and password to load the Get Started page
+
+![](./images/tt2.PNG)
+
+Reset the admin password
+
+![](./images/tt3.PNG)
 
 
 
