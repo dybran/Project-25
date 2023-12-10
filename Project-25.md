@@ -829,43 +829,53 @@ This means that there is an issue with presenting a challenge due to a permissio
 
 __Resolution__
 
-To resolve this issue, I will need to adjust the __IAM permissions__ associated with the mentioned role to allow the __route53:ChangeResourceRecordSets__ action for the specific hosted zone. This can be done by modifying the role's policy to include the necessary permissions.
+To resolve the permissions issue for the IAM role __eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0__ and allow it to perform the __route53:ChangeResourceRecordSets__ action on the specific hosted zone __(Z08522561JSS4FBNMMK3E)__.
 
-To address the permissions issue for the IAM role __eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0__ and allow it to perform the __route53:ChangeResourceRecordSets__ action on the specific hosted zone __(Z08522561JSS4FBNMMK3E)__.
 
-__Create or Update an IAM Policy__
+Identify the IAM role assumed by your EKS cluster nodes - __eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0__
 
-Create a policy document named __route53-policy.json__ with the necessary permissions.
+![](./images/54.PNG)
+
+Update the IAM policy linked to this role by adding the required permissions for Route 53. Ensure that you authorize the route53:ChangeResourceRecordSets and route53:GetChange actions specifically for the designated hosted zone __(arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3)__.
+
+![](./images/55.PNG)
+
+You can see that the __route53:ChangeResourceRecordSets__ is not included in the permission policy above.
+
+Click on __Add permission__ in the screenshot above and add the following
 
 ```
-cat <<EOF > route53-policy.json
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "route53:ChangeResourceRecordSets",
-      "Resource": "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3E"
-    }
-  ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Statement",
+            "Effect": "Allow",
+            "Action": [
+                "route53:ChangeResourceRecordSets",
+                "route53:GetChange"
+            ],
+            "Resource": [
+                "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3",
+                "arn:aws:route53:::change/C01697232LVGJ1O61N6BY"
+            ]
+        }
+    ]
 }
-EOF
 ```
-__Attach the Policy to the IAM Role__
+To obtain the __route53:GetChange__ with the identifier (__C01697232LVGJ1O61N6BY__) in the above, navigate to the __CNAME__ record for __tooling.artifactory.dybran.com__, select the __edit__ option, and subsequently click __save__ without making any actual modifications. Afterward, proceed to click on __view details__.
 
-Use the AWS CLI to attach the policy to the __IAM role__
+![](./images/ch.PNG)
+![](./images/ch2.PNG)
+![](./images/ch3.PNG)
 
-`$ aws iam put-role-policy --role-name eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0 --policy-name Route53AccessPolicy --policy-document file://route53-policy.json`
 
-__Verify the Policy Attachment__
 
-You can verify if the policy is attached to the role by using
 
-`$ aws iam get-role-policy --role-name eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0 --policy-name Route53AccessPolicy`
 
-![](./images/53.PNG)
 
-The __IAM role__ should have the necessary permissions to perform the __route53:ChangeResourceRecordSets__ action on the specified hosted zone, and the error related to Route 53 access should be resolved.
+
+
 
 
 
