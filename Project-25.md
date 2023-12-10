@@ -66,7 +66,17 @@ Overall, the EBS CSI driver plays a critical role in enabling Kubernetes cluster
 
 __Installing EBS CSI Driver__
 
-Check the link to setuo the [__EBS CSI add-on__](https://docs.aws.amazon.com/eks/latest/userguide/managing-ebs-csi.html)
+Run the command to see the pods in the __kube-system__ namespace
+
+`$ kubectl get pods -n kube-system`
+
+![](./images/aaa.PNG)
+
+By running this command, you will observe the presence of __coredns__, __kube-proxy__, and __aws-nodes__.
+
+Once the __Ebs-csi driver__ is installed, additional nodes related to ebs-csi will appear in the __kube-system__ namespace.
+
+Check the link to setup the [__EBS CSI add-on__](https://docs.aws.amazon.com/eks/latest/userguide/managing-ebs-csi.html)
 
 Use this command to check the necessary platform version.
 
@@ -162,7 +172,7 @@ aws eks create-addon --cluster-name $cluster_name --addon-name aws-ebs-csi-drive
 ```
 ![](./images/7.PNG)
 
-Run the command 
+Execute the command, you will find the __ebs-csi driver__ related pods available.
 
 `$ kubectl get pods -n kube-system`
 
@@ -505,9 +515,17 @@ __Accessing the application from the browser__
 Accessing the application through your browser
 Presently, our Kubernetes-hosted application is reachable from outside sources. When you visit your domain's specific URL - __tooling.artifactorydybran.com__, the artifactory application should be accessible.
 
-If you use Chrome as your browser, you might encounter a message indicating that the site is reachable but considered insecure. This occurs when the site lacks a trusted TLS/SSL certificate or doesn't possess one at all.
+Accessing the application using the __HTTP__ protocol
 
 ![](./images/30.PNG)
+
+When accessing the application via the __HTTPS__ protocol in Chrome, you might see a message stating that the site is reachable but insecure. This happens when the site doesn't have a trusted TLS/SSL certificate, or it lacks one entirely.
+
+To view the certificate, click on the "Not Secure" section and then select "Certificate Not Valid."
+
+![](./images/fake-cert.PNG)
+
+From the above, we can see that the ingress-nginx Controller does configure a default TLS/SSL certificate. But it is not trusted because it is a self signed certificate that browsers are not aware of.
 
 The Nginx Ingress Controller sets up a default __TLS/SSL certificate__. However, it is self-signed and not recognized by browsers, which means it is not trusted. To verify this, click on the __"Not Secure"__ label on the browser.
 
@@ -527,9 +545,327 @@ Reset the admin password
 
 ![](./images/tt3.PNG)
 
+Activate the Artifactory License. You will need to purchase a license to use Artifactory enterprise features.
+
+![](./images/lic.PNG)
+
+For learning purposes, you can apply for a free trial license. Simply fill the form [here](https://jfrog.com/start-free/) and a license key will be delivered to your email in few minutes.
+
+__N/B:__ Make sur to  check the box "__schedule a technical demo__"
+
+![](./images/31.PNG)
+
+Check your email
+
+![](./images/32.PNG)
+
+Copy and paste in the license section.
+
+Set __Base URL__. Be sure to use __HTTPS__ i.e __https://tooling.artifactory.dybran.com__
+
+![](./images/33.PNG)
+
+Click on __next__
+
+Skip Proxy settings and creating the repo for now.
+
+![](./images/34.PNG)
+ 
+![](./images/35.PNG)
+
+Finsih the setup
+
+![](./images/36.PNG)
+![](./images/37.PNG)
+
+Next, its time to fix the TLS/SSL configuration so that we will have a trusted HTTPS URL
+
+__Deploying Cert-Manager and managing TLS/SSL for Ingress__
+
+Transport Layer Security (TLS), the successor of the now-deprecated Secure Sockets Layer (SSL), is a cryptographic protocol designed to provide communications security over a computer network.
+The TLS protocol aims primarily to provide cryptography, including privacy (confidentiality), integrity, and authenticity through the use of certificates, between two or more communicating computer applications.
+The certificates required to implement TLS must be issued by a trusted Certificate Authority (CA).
+To see the list of trusted root Certification Authorities (CA) and their certificates used by Google Chrome, you need to use the Certificate Manager built inside Google Chrome as shown below:
+
+
+Open the settings section of google chrome
+
+
+Search for security and click on _Security - 
+Safe Browsing (protection from dangerous sites) and other security settings_
+
+![](./images/38.PNG)
+
+Select __Manage Certificates__
+
+![](./images/40.PNG)
+
+View the installed certificates in your browser
+
+![](./images/41.PNG)
+
+__Certificate Management in Kubernetes__
+
+Streamlining the acquisition and management of trusted certificates from dynamic certificate authorities is a challenging task. It involves overseeing certificate requests, issuance, expiration tracking, and application-specific certificate management, which can incur significant administrative overhead. This often requires the creation of intricate scripts or programs to handle these complexities.
+
+[Cert-Manager](https://cert-manager.io/) is a lifesaver in simplifying these processes. Within Kubernetes clusters, Cert-Manager introduces certificates and certificate issuers as resource types. It streamlines the acquisition, renewal, and utilization of certificates same approach the Ingress Controllers facilitate the creation of Ingress resources within the cluster.
+
+Cert-Manager empowers administrators by enabling the creation of certificate resources and additional resources essential for seamless certificate management. It supports certificate issuance from various sources like __Let's Encrypt, HashiCorp Vault, Venafi,__ and __private PKIs__. The resulting certificates are stored as Kubernetes secrets, housing both the private key and the public certificate for easy access and utilization.
+
+![](./images/42.PNG)
+
+In this Project, we will use __Let's Encrypt__ with cert-manager. 
+
+The certificates issued by __Let's Encrypt__ will work with most browsers because the root certificate that validates all it's certificates is called __“ISRG Root X1”__ which is already trusted by most browsers and servers.
+You will find __ISRG Root X1__ in the list of certificates already installed in your browser.
+
+![](./images/43.PNG)
+
+Cert-maanager will ensure certificates are valid and up to date, and attempt to renew certificates at a configured time before expiry.
+
+__Cert-Manager high Level Architecture__
+
+__Cert-manager__ works by having administrators create a resource in kubernetes called __certificate issuer__ which will be configured to work with supported sources of certificates. This issuer can either be scoped globally in the cluster or only local to the namespace it is deployed to.
+Whenever it is time to create a certificate for a specific host or website address, the process follows the pattern seen in the image below.
+
+![](./images/44.PNG)
+
+__Deploying Cert-manager__
+
+Lets Deploy cert-manager helm chart in Artifact Hub, follow the [installation guide](https://artifacthub.io/packages/helm/cert-manager/cert-manager) and deploy into Kubernetes
+
+Create a namespace __cert-manager__
+
+`$ kubectl create ns cert-manager`
+
+Before installing the chart, you must first install the cert-manager __CustomResourceDefinition__ resources. This is performed in a separate step to allow you to easily uninstall and reinstall cert-manager without deleting your installed custom resources.
+
+`$ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml -n cert-manager`
+
+Add the Jetstack helm repo
+
+`$ helm repo add jetstack https://charts.jetstack.io`
+
+Install the cert-manager helm chart
+
+`$ helm install cert-manager jetstack/cert-manager --version v1.13.2 --namespace cert-manager`
+
+![](./images/45.PNG)
+
+__Certificate Issuer__
+
+In order to begin issuing certificates, you will need to set up a ClusterIssuer or Issuer resource.
+
+Create an Issuer. We will use a Cluster Issuer so that it can be scoped globally. Assuming that we will be using __dybran.com__ domain. Simply update this yaml file and deploy with kubectl. In the section that follows, we will break down each part of the file.
+
+```
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  namespace: "cert-manager"
+  name: "letsencrypt-prod"
+spec:
+  acme:
+    server: "https://acme-v02.api.letsencrypt.org/directory"
+    email: "infradev@oldcowboyshop.com"
+    privateKeySecretRef:
+      name: "letsencrypt-prod"
+    solvers:
+    - selector:
+        dnsZones:
+          - "dybran.com"
+      dns01:
+        route53:
+          region: "us-west-1"
+          hostedZoneID: "Z2CD4NTR2FDPZ"
+```
+The initial section shows the Kubernetes configuration, specifying the __apiVersion, Kind__ and __metadata__. In this context, the Kind refers to a __ClusterIssuer__, indicating its global scope.
+
+ In the spec section, an [__ACME - Automated Certificate Management Environment__](https://cert-manager.io/docs/configuration/acme/) issuer type is specified here. When you create a new __ACME Issuer__, cert-manager will generate a private key which is used to identify you with the ACME server.
+Certificates issued by public ACME servers are typically trusted by client's computers by default. This means that, for example, visiting a website that is backed by an ACME certificate issued for that URL, will be trusted by default by most client's web browsers. ACME certificates are typically free.
+Let’s Encrypt uses the ACME protocol to verify that you control a given domain name and to issue you a certificate. You can either use the let's encrypt Production server address __https://acme-v02.api.letsencrypt.org/directory__ which can be used for all production websites. Or it can be replaced with the staging URL __https://acme-staging-v02.api.letsencrypt.org/directory__ for all Non-Production sites.
+
+The __privateKeySecretRef__ has configuration for the private key name you prefer to use to store the ACME account private key. This can be anything you specify, for example __letsencrypt-prod__.
+
+This section is part of the spec that configures solvers which determines the domain address that the issued certificate will be registered with. dns01 is one of the different challenges that cert-manager uses to verify domain ownership. Read more on DNS01 Challenge here. With the DNS01 configuration, you will need to specify the Route53 DNS Hosted Zone ID and region. Since we are using EKS in AWS, the IAM permission of the worker nodes will be used to access Route53. Therefore if appropriate permissions is not set for EKS worker nodes, it is possible that certificate challenge with Route53 will fail, hence certificates will not get issued.
+
+The next section under the __spec__ that configures solvers which determines the domain address that the issued certificate will be registered with. __dns01__ is one of the different challenges that cert-manager uses to verify domain ownership. Read more on [__DNS01 Challenge here__](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge). With the __ DNS01__ configuration, you will need to specify the Route53 DNS Hosted __Zone ID__ and region. Since we are using EKS in AWS, the IAM permission of the worker nodes will be used to access Route53. Therefore if appropriate permissions is not set for EKS worker nodes, it is possible that certificate challenge with Route53 will fail, hence certificates will not get issued.
+The other possible option is the __HTTP01 challenge__, but we won't be using that.
+
+To get the __Hosted Zone ID__
+
+`$ aws route53 list-hosted-zones`
+
+![](./images/46.PNG)
+
+Update the yaml file.
+
+```
+cat <<EOF > cluster-issuer.yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  namespace: "cert-manager"
+  name: "letsencrypt-prod"
+spec:
+  acme:
+    server: "https://acme-v02.api.letsencrypt.org/directory"
+    email: "infradev@oldcowboyshop.com"
+    privateKeySecretRef:
+      name: "letsencrypt-prod"
+    solvers:
+    - selector:
+        dnsZones:
+          - "dybran.com"
+      dns01:
+        route53:
+          region: "us-west-1"
+          hostedZoneID: "Z08522561JSS4FBNMMK3E"
+EOF
+```
+Deploy with __kubectl__ in the __cert-manager__ namespace
+
+`$ kubectl apply -f cluster-issuer.yaml -n cert-manager`
+
+![](./images/47.PNG)
+
+`$ kubectl get pods -n cert-manager`
+
+![](./images/48.PNG)
+
+With the ClusterIssuer properly configured, it is now time to start getting certificates issued.
+
+__Configuring Ingress for TLS__
+
+To ensure that every created ingress also has TLS configured, we will need to update the ingress manifest with TLS specific configurations.
+
+```
+cat <<EOF > artifactory-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: nginx
+  name: artifactory
+spec:
+  rules:
+  - host: "tooling.artifactory.dybran.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: artifactory-artifactory-nginx
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - "tooling.artifactory.dybran.com"
+    secretName: "tooling.artifactory.dybran.com"
+EOF
+```
+The most significat updates to the ingress definition is the annotations and tls sections.
+
+Annotations are used similar to labels in kubernetes. They are ways to attach metadata to objects.
+
+
+__Difference between Annotations and Label__
+
+Annotations and labels serve distinct roles in Kubernetes resource management.
+
+__Labels__ function as identifiers for resource grouping when used alongside selectors. To ensure efficient querying, labels adhere to [RFC 1123](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#:~:text=RFC%201123%20Label%20Names&text=in%20RFC%201123.-,This%20means%20the%20name%20must%3A,start%20with%20an%20alphanumeric%20character) constraints, limiting their length to 63 characters. Therefore, utilizing labels is ideal for Kubernetes when organizing related resources into sets.
+
+On the other hand, __annotations__ cater to "non-identifying information" or metadata that Kubernetes doesn't rely on. Unlike labels, there are no constraints imposed on annotation keys and values. Consequently, if the goal is to furnish additional information for human comprehension regarding a specific resource, annotations offer a more suitable choice.
+
+The Annotation added to the Ingress resource adds metadata to specify the issuer responsible for requesting certificates. The issuer here will be the same one we have created earlier with the name __letsencrypt-prod__
+
+```
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+```
+
+The other section is tls where the host name that will require https is specified. The secretName also holds the name of the secret that will be created which will store details of the certificate key-pair. i.e Private key and public certificate.
+
+```
+  tls:
+  - hosts:
+    - "tooling.artifactory.dybran.com"
+    secretName: "tooling.artifactory.dybran.com"
+```
+Redeploying the newly updated ingress will go through the process as shown below.
+
+![](./images/49.PNG)
+
+commands to see each resource at each phase.
+
+`$ kubectl get certificaaterequest -n tools`
+
+`$ kubectl get order -n tools`
+
+`$ kubectl get challenge -n tools`
+
+`$ kubectl get certificate -n tools`
 
 
 
+
+__Problem encoutered__
+
+After applying the above command, i ran into some issues, my certicate remains in __pending state__.
+
+![](./images/50.PNG)
+
+During investigation, i ran __kubectl describe__ on the resources when i ran the command on the __challenge__ resource
+
+`$ kubectl describe challenge tooling.artifactory.dybran.com-1-1046896647-1545754586 -n tools`
+
+![](./images/52.PNG)
+
+This means that there is an issue with presenting a challenge due to a permissions error related to Route 53 in AWS. The error indicates that the __IAM role__ being assumed __(eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0)__ does not have the necessary permissions to perform the __route53:ChangeResourceRecordSets__ action on the specified hosted zone __(Z08522561JSS4FBNMMK3E)__.
+
+
+__Resolution__
+
+To resolve this issue, I will need to adjust the __IAM permissions__ associated with the mentioned role to allow the __route53:ChangeResourceRecordSets__ action for the specific hosted zone. This can be done by modifying the role's policy to include the necessary permissions.
+
+To address the permissions issue for the IAM role __eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0__ and allow it to perform the __route53:ChangeResourceRecordSets__ action on the specific hosted zone __(Z08522561JSS4FBNMMK3E)__.
+
+__Create or Update an IAM Policy__
+
+Create a policy document named __route53-policy.json__ with the necessary permissions.
+
+```
+cat <<EOF > route53-policy.json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "route53:ChangeResourceRecordSets",
+      "Resource": "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3E"
+    }
+  ]
+}
+EOF
+```
+__Attach the Policy to the IAM Role__
+
+Use the AWS CLI to attach the policy to the __IAM role__
+
+`$ aws iam put-role-policy --role-name eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0 --policy-name Route53AccessPolicy --policy-document file://route53-policy.json`
+
+__Verify the Policy Attachment__
+
+You can verify if the policy is attached to the role by using
+
+`$ aws iam get-role-policy --role-name eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0 --policy-name Route53AccessPolicy`
+
+![](./images/53.PNG)
+
+The __IAM role__ should have the necessary permissions to perform the __route53:ChangeResourceRecordSets__ action on the specified hosted zone, and the error related to Route 53 access should be resolved.
 
 
 
