@@ -766,7 +766,12 @@ spec:
     secretName: "tooling.artifactory.dybran.com"
 EOF
 ```
-The most significat updates to the ingress definition is the annotations and tls sections.
+Create the updated __artifactory-ingress.yaml__
+
+`$ kubectl apply -f artifactory-nginx.yaml -n tools`
+
+
+The most significant updates to the ingress definition is the annotations and tls sections.
 
 Annotations are used similar to labels in kubernetes. They are ways to attach metadata to objects.
 
@@ -801,7 +806,7 @@ Redeploying the newly updated ingress will go through the process as shown below
 
 commands to see each resource at each phase.
 
-`$ kubectl get certificaaterequest -n tools`
+`$ kubectl get certificaterequest -n tools`
 
 `$ kubectl get order -n tools`
 
@@ -818,7 +823,7 @@ After applying the above command, i ran into some issues, my certicate remains i
 
 ![](./images/50.PNG)
 
-During investigation, i ran __kubectl describe__ on the resources when i ran the command on the __challenge__ resource
+During investigation on the __challenge__ resource, I noticed a permission issue
 
 `$ kubectl describe challenge tooling.artifactory.dybran.com-1-1046896647-1545754586 -n tools`
 
@@ -842,9 +847,14 @@ Update the IAM policy linked to this role by adding the required permissions for
 
 You can see that the __route53:ChangeResourceRecordSets__ is not included in the permission policy above.
 
-Click on __Add permission__ in the screenshot above and add the following
+You can also get the attached policies using this command
+
+`$ aws iam list-attached-role-policies --role-name eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-SQcjbXR7eFcD`
+
+Create the IAM policy  to be added to the role policy
 
 ```
+cat <<EOF > ChangeResourceRecordSets.json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -856,12 +866,13 @@ Click on __Add permission__ in the screenshot above and add the following
                 "route53:GetChange"
             ],
             "Resource": [
-                "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3",
-                "arn:aws:route53:::change/C01697232LVGJ1O61N6BY"
+                "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3E",
+                "arn:aws:route53:::change/C0807811373COG6YAOKFE"
             ]
         }
     ]
 }
+EOF
 ```
 To obtain the __route53:GetChange__ with the identifier (__C01697232LVGJ1O61N6BY__) in the above, navigate to the __CNAME__ record for __tooling.artifactory.dybran.com__, select the __edit__ option, and subsequently click __save__ without making any actual modifications. Afterward, proceed to click on __view details__.
 
@@ -869,6 +880,55 @@ To obtain the __route53:GetChange__ with the identifier (__C01697232LVGJ1O61N6BY
 ![](./images/ch2.PNG)
 ![](./images/ch3.PNG)
 
+Apply the updated IAM policy to the IAM role. You can do this through the AWS Management Console or by using the AWS CLI
+
+```
+ aws iam create-policy --policy-name ChangeResourceRecordSets --policy-document file://ChangeResourceRecordSets.json
+```
+
+After running the create-policy command, the output will include the Amazon Resource Name (ARN) of the created policy.
+
+Then attach the policy to the role
+
+```
+aws iam attach-role-policy --role-name eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-SQcjbXR7eFcD --policy-arn arn:aws:iam::939895954199:policy/ChangeResourceRecordSets
+```
+![](./images/333.PNG)
+
+On the policies, we will see the newly created policy
+
+![](./images/444.PNG)
+
+You can verify that the policy has been attached by running
+
+```
+aws iam list-attached-role-policies --role-name eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-SQcjbXR7eFcD
+```
+![](./images/432.PNG)
+
+Ensure the IAM role establishes the accurate __trust relationship__ with the EKS cluster, enabling the cluster to assume the role. The policy should grant permissions for __AWS services eks.amazonaws.com__ and __ec2.amazonaws.com__ to assume roles via __(sts:AssumeRole)__. This practice is frequently employed to authorize services or resources for particular actions or access to specific resources within your AWS setup.
+
+On the role - __eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-HSWbuyw3gPhC__, update the __trust relationship__ with this
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": [
+                    "eks.amazonaws.com",
+                    "ec2.amazonaws.com"
+                ]
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+```
+![](./images/tr.PNG)
+![](./images/tr1.PNG)
 
 
 
@@ -885,5 +945,6 @@ To obtain the __route53:GetChange__ with the identifier (__C01697232LVGJ1O61N6BY
 __N/B__
 
 While setting up the EBS CSI driver, I had to specify the region of the cluster.
+
 
 

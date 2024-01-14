@@ -9,8 +9,8 @@
                 "route53:GetChange"
             ],
             "Resource": [
-                "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3",
-                "arn:aws:route53:::change/C01697232LVGJ1O61N6BY"
+                "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3E",
+                "arn:aws:route53:::change/C04423131UKATMX418PYC"
             ]
         }
     ]
