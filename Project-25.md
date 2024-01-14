@@ -867,14 +867,14 @@ cat <<EOF > ChangeResourceRecordSets.json
             ],
             "Resource": [
                 "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3E",
-                "arn:aws:route53:::change/C0807811373COG6YAOKFE"
+                "arn:aws:route53:::change/C03778642NCAAJ62J6XKO"
             ]
         }
     ]
 }
 EOF
 ```
-To obtain the __route53:GetChange__ with the identifier (__C01697232LVGJ1O61N6BY__) in the above, navigate to the __CNAME__ record for __tooling.artifactory.dybran.com__, select the __edit__ option, and subsequently click __save__ without making any actual modifications. Afterward, proceed to click on __view details__.
+To obtain the __route53:GetChange__ with the identifier (__C03778642NCAAJ62J6XKO__) in the above, navigate to the __CNAME__ record for __tooling.artifactory.dybran.com__, select the __edit__ option, and subsequently click __save__ without making any actual modifications. Afterward, proceed to click on __view details__.
 
 ![](./images/ch.PNG)
 ![](./images/ch2.PNG)
@@ -883,7 +883,7 @@ To obtain the __route53:GetChange__ with the identifier (__C01697232LVGJ1O61N6BY
 Apply the updated IAM policy to the IAM role. You can do this through the AWS Management Console or by using the AWS CLI
 
 ```
- aws iam create-policy --policy-name ChangeResourceRecordSets --policy-document file://ChangeResourceRecordSets.json
+aws iam create-policy --policy-name ChangeResourceRecordSets --policy-document file://ChangeResourceRecordSets.json
 ```
 
 After running the create-policy command, the output will include the Amazon Resource Name (ARN) of the created policy.
