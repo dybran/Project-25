@@ -867,7 +867,7 @@ cat <<EOF > ChangeResourceRecordSets.json
             ],
             "Resource": [
                 "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3E",
-                "arn:aws:route53:::change/C03778642NCAAJ62J6XKO"
+                "arn:aws:route53:::change/C0567608HJ3CPCXTDOBL"
             ]
         }
     ]
@@ -946,5 +946,8 @@ __N/B__
 
 While setting up the EBS CSI driver, I had to specify the region of the cluster.
 
+To upgrade the Cluster
+
+`$ eksctl upgrade cluster dybran-eks-tooling --approve --version 1.29 --region us-west-1`
 
 
