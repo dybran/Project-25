@@ -915,6 +915,9 @@ Then check
 `$ kubectl get certificate -n tools`
 
 ![](./images/nnew.PNG)
+![](./images/1-.PNG)
+
+You will notice that the __challenge__ is no longer available in the namespace. When the ACME challenge is no longer present in the namespace but the __Certificate, Order, and CertificateRequest resources__ are available and functional, it suggests that the challenge process has completed successfully. The challenge being absent from the namespace is expected once it has been successfully processed and validated.
 
 When you run the command `kubectl get secret tooling.artifactory.dybran.com -o yaml -n tools` the output will display data containing the encoded versions of the private key __(tls.key)__ and public certificate __(tls.crt)__. This data represents the actual certificate configuration that the ingress controller will utilize in its Nginx configuration to handle TLS/SSL termination on the ingress.
 
