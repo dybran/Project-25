@@ -902,6 +902,8 @@ aws iam list-attached-role-policies --role-name eksctl-dybran-eks-tooling-nodegr
 
 Restart the pod in the `cert-manager` namespace by deleting it, allowing it to be automatically recreated.
 
+`kubectl delete pod cert-manager-5bf6cdbb96-zg47k -n cert-manager`
+
 Then check
 
 `$ kubectl get certificaterequest -n tools`
@@ -913,6 +915,12 @@ Then check
 `$ kubectl get certificate -n tools`
 
 ![](./images/nnew.PNG)
+
+When you run the command `kubectl get secret tooling.artifactory.dybran.com -o yaml -n tools` the output will display data containing the encoded versions of the private key __(tls.key)__ and public certificate __(tls.crt)__. This data represents the actual certificate configuration that the ingress controller will utilize in its Nginx configuration to handle TLS/SSL termination on the ingress.
+
+![](./images/99.PNG)
+
+
 
 
 
