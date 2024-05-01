@@ -900,7 +900,7 @@ aws iam list-attached-role-policies --role-name eksctl-dybran-eks-tooling-nodegr
 ```
 ![](./images/432.PNG)
 
-restart the pod in the __cert-manager__ namespace by deleting it so it can be recreated.
+Restart the pod in the `cert-manager` namespace by deleting it, allowing it to be automatically recreated.
 
 Then check
 
