@@ -640,7 +640,7 @@ Create a namespace __cert-manager__
 
 Before installing the chart, you must first install the cert-manager __CustomResourceDefinition__ resources. This is performed in a separate step to allow you to easily uninstall and reinstall cert-manager without deleting your installed custom resources.
 
-`$ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml -n cert-manager`
+`$ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.crds.yaml -n cert-manager`
 
 Add the Jetstack helm repo
 
@@ -866,20 +866,14 @@ cat <<EOF > ChangeResourceRecordSets.json
                 "route53:GetChange"
             ],
             "Resource": [
-                "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3E",
-                "arn:aws:route53:::change/C0567608HJ3CPCXTDOBL"
+                "arn:aws:route53:::hostedzone/*",
+                "arn:aws:route53:::change/*"
             ]
         }
     ]
 }
 EOF
 ```
-To obtain the __route53:GetChange__ with the identifier (__C03778642NCAAJ62J6XKO__) in the above, navigate to the __CNAME__ record for __tooling.artifactory.dybran.com__, select the __edit__ option, and subsequently click __save__ without making any actual modifications. Afterward, proceed to click on __view details__.
-
-![](./images/ch.PNG)
-![](./images/ch2.PNG)
-![](./images/ch3.PNG)
-
 Apply the updated IAM policy to the IAM role. You can do this through the AWS Management Console or by using the AWS CLI
 
 ```
@@ -906,29 +900,21 @@ aws iam list-attached-role-policies --role-name eksctl-dybran-eks-tooling-nodegr
 ```
 ![](./images/432.PNG)
 
-Ensure the IAM role establishes the accurate __trust relationship__ with the EKS cluster, enabling the cluster to assume the role. The policy should grant permissions for __AWS services eks.amazonaws.com__ and __ec2.amazonaws.com__ to assume roles via __(sts:AssumeRole)__. This practice is frequently employed to authorize services or resources for particular actions or access to specific resources within your AWS setup.
+restart the pod in the __cert-manager__ namespace by deleting it so it can be recreated.
 
-On the role - __eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-HSWbuyw3gPhC__, update the __trust relationship__ with this
+Then check
 
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "Service": [
-                    "eks.amazonaws.com",
-                    "ec2.amazonaws.com"
-                ]
-            },
-            "Action": "sts:AssumeRole"
-        }
-    ]
-}
-```
-![](./images/tr.PNG)
-![](./images/tr1.PNG)
+`$ kubectl get certificaterequest -n tools`
+
+`$ kubectl get order -n tools`
+
+`$ kubectl get challenge -n tools`
+
+`$ kubectl get certificate -n tools`
+
+![](./images/nnew.PNG)
+
+
 
 
 
