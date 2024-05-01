@@ -834,14 +834,14 @@ This means that there is an issue with presenting a challenge due to a permissio
 
 __Resolution__
 
-To resolve the permissions issue for the IAM role __eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0__ and allow it to perform the __route53:ChangeResourceRecordSets__ action on the specific hosted zone __(Z08522561JSS4FBNMMK3E)__.
+To resolve the permissions issue for the IAM role __eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0__ and allow it to perform the __route53:ChangeResourceRecordSets__ action on the hosted zone __(Z08522561JSS4FBNMMK3E)__.
 
 
 Identify the IAM role assumed by your EKS cluster nodes - __eksctl-dybran-eks-tooling-nodegrou-NodeInstanceRole-7jWK8ZOG77D0__
 
 ![](./images/54.PNG)
 
-Update the IAM policy linked to this role by adding the required permissions for Route 53. Ensure that you authorize the route53:ChangeResourceRecordSets and route53:GetChange actions specifically for the designated hosted zone __(arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3)__.
+Update the IAM policy linked to this role by adding the required permissions for Route 53. Ensure that you authorize the __route53:ChangeResourceRecordSets__ and __route53:GetChange__ actions for the designated hosted zone __arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3E__.
 
 ![](./images/55.PNG)
 
@@ -866,7 +866,7 @@ cat <<EOF > ChangeResourceRecordSets.json
                 "route53:GetChange"
             ],
             "Resource": [
-                "arn:aws:route53:::hostedzone/*",
+                "arn:aws:route53:::hostedzone/Z08522561JSS4FBNMMK3E",
                 "arn:aws:route53:::change/*"
             ]
         }
@@ -923,7 +923,7 @@ Run
 
 `kubectl get secret tooling.artifactory.dybran.com -o yaml -n tools`
 
-the output will display data containing the encoded versions of the private key __(tls.key)__ and public certificate __(tls.crt)__. This data represents the actual certificate configuration that the ingress controller will utilize in its Nginx configuration to handle TLS/SSL termination on the ingress.
+the output will display data containing the private key __(tls.key)__ and public certificate __(tls.crt)__. This data represents the actual certificate configuration that the ingress controller will utilize in its Nginx configuration to handle TLS/SSL termination on the ingress.
 
 ![](./images/99.PNG)
 
