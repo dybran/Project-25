@@ -551,7 +551,7 @@ Activate the Artifactory License. You will need to purchase a license to use Art
 
 For learning purposes, you can apply for a free trial license. Simply fill the form [here](https://jfrog.com/start-free/) and a license key will be delivered to your email in few minutes.
 
-__N/B:__ Make sur to  check the box "__schedule a technical demo__"
+__N/B:__ Make sure to  check the box "__schedule a technical demo__"
 
 ![](./images/31.PNG)
 
@@ -648,7 +648,7 @@ Add the Jetstack helm repo
 
 Install the cert-manager helm chart
 
-`$ helm install cert-manager jetstack/cert-manager --version v1.13.2 --namespace cert-manager`
+`$ helm install cert-manager jetstack/cert-manager --version v1.14.5 --namespace cert-manager`
 
 ![](./images/45.PNG)
 
@@ -770,6 +770,7 @@ Create the updated __artifactory-ingress.yaml__
 
 `$ kubectl apply -f artifactory-nginx.yaml -n tools`
 
+After updating the ingress above, the artifactory will be inaccessible through the browser.
 
 The most significant updates to the ingress definition is the annotations and tls sections.
 
@@ -904,6 +905,8 @@ Restart the pod in the `cert-manager` namespace by deleting it, allowing it to b
 
 `kubectl delete pod cert-manager-5bf6cdbb96-zg47k -n cert-manager`
 
+![](./images/121.PNG)
+
 Then check
 
 `$ kubectl get certificaterequest -n tools`
@@ -915,9 +918,6 @@ Then check
 `$ kubectl get certificate -n tools`
 
 ![](./images/nnew.PNG)
-![](./images/1-.PNG)
-
-You will notice that the __challenge__ is no longer available in the namespace. When the ACME challenge is no longer present in the namespace but the __Certificate, Order, and CertificateRequest resources__ are available and functional, it suggests that the challenge process has completed successfully. The challenge being absent from the namespace is expected once it has been successfully processed and validated.
 
 Run
 
@@ -926,6 +926,38 @@ Run
 the output will display data containing the private key __(tls.key)__ and public certificate __(tls.crt)__. This data represents the actual certificate configuration that the ingress controller will utilize in its Nginx configuration to handle TLS/SSL termination on the ingress.
 
 ![](./images/99.PNG)
+
+Refresh the browser, you will find that the site is now secure.
+
+![](./images/lo.PNG)
+
+Finally, one more task for you to do is to ensure that the LoadBalancer created for artifactory is destroyed. If you run a get service kubectl command like below
+
+![](./images/ln.PNG)
+
+You will notice that the load balancer remains intact. 
+
+Modify the __Helm values__ file for Artifactory and verify that the __artifactory-artifactory-nginx__ service is set to use __ClusterIP__.
+
+`$ helm show values jfrog/artifactory`
+
+Redirect the values to a file
+
+`$ helm show values jfrog/artifactory > values.yaml`
+
+![](./images/va.PNG)
+
+Replace the LoadBalancer created for artifactory with ClusterIP
+
+`$ helm upgrade artifactory jfrog/artifactory --set nginx.service.type=ClusterIP,databaseUpgradeReady=true -n tools`
+
+__nginx.service.type=ClusterIP:__ This parameter configures the Nginx service to use a ClusterIP, which is the default service type for internal services in a Kubernetes cluster. This type of service is only accessible from within the cluster.
+__databaseUpgradeReady=true:__ This parameter is a flag indicating that the database upgrade is ready. This could be part of a process where you are informing Artifactory that the database upgrade is complete, and therefore the application can proceed with any related tasks.
+
+![](./images/up.PNG)
+
+Finally, update the ingress to use __artifactory-artifactory-nginx__ as the backend service
+
 
 
 
