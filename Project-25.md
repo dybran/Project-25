@@ -951,4 +951,21 @@ To upgrade the Cluster
 
 `$ eksctl upgrade cluster dybran-eks-tooling --approve --version 1.29 --region us-west-1`
 
+To set the __k__ alias for __kubectl__
+
+Open your __.bashrc file__
+
+`$ nano ~/.bashrc`
+
+Add the following line at the end of the file:
+
+`alias k='kubectl'`
+
+Save Changes press __Ctrl + O__, which will prompt you to save the changes.
+Nano will ask you to confirm then press __Enter__. After saving the file, you can exit the editor __Ctrl + X__.
+
+Reload the __.bashrc file__
+
+`$ source ~/.bashrc`
+
 
