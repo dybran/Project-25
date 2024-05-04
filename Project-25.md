@@ -413,12 +413,6 @@ If you go ahead to AWS console, copy the address in the EXTERNAL-IP column, and 
 
 ![](./images/asa.PNG)
 
-Check the IngressClass that identifies this ingress controller.
-
-`$ kubectl get ingressclass -n ingress-nginx`
-
-![](./images/25.PNG)
-
 __Deploy Artifactory Ingress__
 
 Now, it is time to configure the ingress so that we can route traffic to the Artifactory internal service, through the ingress controller's load balancer.
@@ -444,14 +438,20 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: artifactory-artifactory-nginx
+            name: artifactory
             port:
-              number: 80
+              number: 8082
 EOF
 ```
 Create the ingress resource in the __tools__ namespace
 
 `$ kubectl apply -f artifactory-ingress.yaml -n tools`
+
+To get the IngressClass that identifies this ingress controller in the above, Run:
+
+`$ kubectl get ingressclass -n ingress-nginx`
+
+![](./images/25.PNG)
 
 Get the ingress resource
 
@@ -512,20 +512,21 @@ In the create record section, type in the record name, and toggle the alias butt
 
 __Accessing the application from the browser__
 
-Accessing the application through your browser
-Presently, our Kubernetes-hosted application is reachable from outside sources. When you visit your domain's specific URL - __tooling.artifactorydybran.com__, the artifactory application should be accessible.
-
-Accessing the application using the __HTTP__ protocol
-
-![](./images/30.PNG)
+we now have an application running in Kubernetes that is also accessible externally. That means if you navigate to __https://tooling.artifactory.dybran.com__ it should load up the artifactory application.
 
 When accessing the application via the __HTTPS__ protocol in Chrome, you might see a message stating that the site is reachable but insecure. This happens when the site doesn't have a trusted TLS/SSL certificate, or it lacks one entirely.
 
-To view the certificate, click on the "Not Secure" section and then select "Certificate Not Valid."
+![](./images/30.PNG)
 
-![](./images/fake-cert.PNG)
+We can access this using __Edge browser__ or __Safari__
+
+![](./images/03.PNG)
 
 From the above, we can see that the ingress-nginx Controller does configure a default TLS/SSL certificate. But it is not trusted because it is a self signed certificate that browsers are not aware of.
+
+To view the certificate, click on the "Not Secure" section and then select "Your connection to this site isn't secure"
+
+![](./images/fake-cert.PNG)
 
 The Nginx Ingress Controller sets up a default __TLS/SSL certificate__. However, it is self-signed and not recognized by browsers, which means it is not trusted. To verify this, click on the __"Not Secure"__ label on the browser.
 
@@ -757,9 +758,9 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: artifactory-artifactory-nginx
+            name: artifactory
             port:
-              number: 80
+              number: 8082
   tls:
   - hosts:
     - "tooling.artifactory.dybran.com"
@@ -771,6 +772,8 @@ Create the updated __artifactory-ingress.yaml__
 `$ kubectl apply -f artifactory-nginx.yaml -n tools`
 
 After updating the ingress above, the artifactory will be inaccessible through the browser.
+
+![](./images/112.PNG)
 
 The most significant updates to the ingress definition is the annotations and tls sections.
 
@@ -919,6 +922,8 @@ Then check
 
 ![](./images/nnew.PNG)
 
+In the screenshot above, you will see that the challenges have been successfully resolved and are no longer present because a certificate has been obtained.
+
 Run
 
 `kubectl get secret tooling.artifactory.dybran.com -o yaml -n tools`
@@ -958,10 +963,54 @@ __databaseUpgradeReady=true:__ This parameter is a flag indicating that the data
 
 Finally, update the ingress to use __artifactory-artifactory-nginx__ as the backend service
 
+```
+cat <<EOF > artifactory-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: nginx
+  name: artifactory
+spec:
+  rules:
+  - host: "tooling.artifactory.dybran.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: artifactory-artifactory-nginx
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - "tooling.artifactory.dybran.com"
+    secretName: "tooling.artifactory.dybran.com"
+EOF
+```
+Apply
+
+`$ kubectl apply -f artifactory-ingress.yaml -n tools`
+
+![](./images/ag.PNG)
+
+If everything goes well, you will be prompted at login to set the BASE URL. It will pick up the new https address. Simply click next
+
+![](./images/33.PNG)
 
 
 
+Skip the proxy part of the setup.
 
+Skip repositories creation because we will configure all of this in the next project
+
+Then complete the setup.
+
+![](./images/fa.PNG)
+
+### Deploying Prometheus, Grafana and ELK
 
 
 
