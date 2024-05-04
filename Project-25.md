@@ -5,7 +5,7 @@ In [the Previous Project](https://github.com/dybran/Project-24/blob/main/Project
 
 
 __Aim of the project__
-========================
+
 The aim of this project is to deploy a set of DevOps tools, focusing on identifying and addressing common challenges in real-world deployments while refining our troubleshooting techniques.
 
 We will also customize Helm values files to automate the setup of applications and work closely with various DevOps tools, gaining insights into their role in the DevOps lifecycle and how they fit within the broader ecosystem.
@@ -28,7 +28,7 @@ Artifactory is one of the products offered by [JFrog](https://jfrog.com/), a com
 - __JFrog Xray__: A security tool that can be integrated at different stages of a JFrog pipeline. Its primary function is to scan stored artifacts for security vulnerabilities, including all dependent code.
 
 __Project Requirement__
-============
+
 The Project requirement is to use Jfrog Artifactory as a private registry for the organisation's Docker images and Helm charts. This requirement will satisfy part of the company's corporate security policies to never download artifacts directly from the public into production systems. We will eventually have a CI pipeline that initially pulls public docker images and helm charts from the internet, store in artifactory and scan the artifacts for security vulnerabilities before deploying into the corporate infrastructure. Any found vulnerabilities will immediately trigger an action to quarantine such artifacts.
 
 __Deploy Jfrog Artifactory into Kubernetes__
