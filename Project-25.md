@@ -1,9 +1,11 @@
 ## __Deploying and Packaging Applications into Kubernetes with Helm__
 
 
-In [Project-24](https://github.com/dybran/Project-24/blob/main/Project-24.md), we acquired practical skills in using Helm to deploy applications on Kubernetes.
+In [The Previous Project](https://github.com/dybran/Project-24/blob/main/Project-24.md), we used Helm to deploy applications on Kubernetes.
 
-Now, in this project, we are focusing on deploying a suite of DevOps tools. Our goal is to confront and understand the typical challenges faced in real-world deployments while mastering effective troubleshooting strategies. We will explore the customization of Helm values files to automate application setups. Throughout the process of deploying different DevOps tools, we'll actively interact with them, comprehending their place in the DevOps lifecycle and how they integrate into the larger ecosystem.
+The aim o fthis project i sto deploy a set of DevOps tools, focusing on identifying and addressing common challenges in real-world deployments while refining our troubleshooting techniques.
+
+We will also customize Helm values files to automate the setup of applications and work closely with various DevOps tools, gaining insights into their role in the DevOps lifecycle and how they fit within the broader ecosystem.
 
 Our primary focus will be on:
 
@@ -17,17 +19,18 @@ Then
 - Grafana
 - Elasticsearch ELK using [ECK](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-install-helm.html).
 
-Artifactory is part of a suit of products from a company called [Jfrog](https://jfrog.com/). __Jfrog__ started out as an artifact repository where software binaries in different formats are stored. Today, Jfrog has transitioned from an artifact repository to a DevOps Platform that includes CI and CD capabilities. This has been achieved by offering more products in which Jfrog Artifactory is part of. Other offerings include
+Artifactory is one of the products offered by [JFrog](https://jfrog.com/), a company known for its suite of software development tools. Initially, JFrog focused on creating an artifact repository to store software binaries in various formats. However, the company has since evolved into a comprehensive DevOps platform with CI/CD capabilities. This shift has been driven by the introduction of additional products that integrate with JFrog Artifactory. These include:
 
-- __JFrog Pipelines__ -  a CI-CD product that works well with its Artifactory repository. Think of this product as an alternative to Jenkins.
-- __JFrog Xray__ - a security product that can be built-into various steps within a JFrog pipeline. Its job is to scan for security vulnerabilities in the stored artifacts. It is able to scan all dependent code.
+- __JFrog Pipelines__: A CI/CD tool designed to work seamlessly with Artifactory, serving as a possible alternative to Jenkins.
+- __JFrog Xray__: A security tool that can be integrated at different stages of a JFrog pipeline. Its primary function is to scan stored artifacts for security vulnerabilities, including all dependent code.
 
-In this project, the requirement is to use Jfrog Artifactory as a private registry for the organisation's Docker images and Helm charts. This requirement will satisfy part of the company's corporate security policies to never download artifacts directly from the public into production systems. We will eventually have a CI pipeline that initially pulls public docker images and helm charts from the internet, store in artifactory and scan the artifacts for security vulnerabilities before deploying into the corporate infrastructure. Any found vulnerabilities will immediately trigger an action to quarantine such artifacts.
+__Project Requirement__
+
+The Project requirement is to use Jfrog Artifactory as a private registry for the organisation's Docker images and Helm charts. This requirement will satisfy part of the company's corporate security policies to never download artifacts directly from the public into production systems. We will eventually have a CI pipeline that initially pulls public docker images and helm charts from the internet, store in artifactory and scan the artifacts for security vulnerabilities before deploying into the corporate infrastructure. Any found vulnerabilities will immediately trigger an action to quarantine such artifacts.
 
 __Deploy Jfrog Artifactory into Kubernetes__
 
-
-First, we provision the kubernetes cluster using __eksctl__. See [Project-22](https://github.com/dybran/Project-22/blob/main/Project-22.md).
+First, we provision the kubernetes cluster using __eksctl__. See [here](https://github.com/dybran/Project-22/blob/main/Project-22.md).
 
 
 Create the cluster
@@ -50,17 +53,17 @@ An __EBS CSI driver__ is a crucial component in a Kubernetes cluster that utiliz
 
 Here are the key reasons why an EBS CSI driver is essential for a Kubernetes cluster:
 
-1. **Dynamic Provisioning:** The EBS CSI driver eliminates the need for manual EBS volume creation and configuration, enabling dynamic provisioning of EBS volumes directly within Kubernetes. This streamlines the storage provisioning process and reduces administrative overhead.
+- __Dynamic Provisioning:__ The EBS CSI driver eliminates the need for manual EBS volume creation and configuration, enabling dynamic provisioning of EBS volumes directly within Kubernetes. This streamlines the storage provisioning process and reduces administrative overhead.
 
-2. **Automated Attachment:** The EBS CSI driver automatically attaches and detaches EBS volumes to the appropriate Kubernetes nodes based on pod scheduling. This ensures that containers have access to the required storage without manual intervention.
+- __Automated Attachment:__ The EBS CSI driver automatically attaches and detaches EBS volumes to the appropriate Kubernetes nodes based on pod scheduling. This ensures that containers have access to the required storage without manual intervention.
 
-3. **Volume Lifecycle Management:** The EBS CSI driver manages the entire lifecycle of EBS volumes, including creation, deletion, resizing, and snapshotting. This provides a unified approach to storage management within Kubernetes.
+- __Volume Lifecycle Management:__ The EBS CSI driver manages the entire lifecycle of EBS volumes, including creation, deletion, resizing, and snapshotting. This provides a unified approach to storage management within Kubernetes.
 
-4. **Simplified Storage Management:** The EBS CSI driver simplifies storage management in Kubernetes by decoupling the storage interface from the Kubernetes controller manager. This allows for more efficient storage management and reduces the complexity of the Kubernetes control plane.
+- __Simplified Storage Management:__ The EBS CSI driver simplifies storage management in Kubernetes by decoupling the storage interface from the Kubernetes controller manager. This allows for more efficient storage management and reduces the complexity of the Kubernetes control plane.
 
-5. **Enhanced Storage Flexibility:** The EBS CSI driver supports a variety of EBS volume configurations, including different volume types, sizes, and performance options. This provides greater flexibility in tailoring storage to specific application requirements.
+- __Enhanced Storage Flexibility:__ The EBS CSI driver supports a variety of EBS volume configurations, including different volume types, sizes, and performance options. This provides greater flexibility in tailoring storage to specific application requirements.
 
-6. **Integration with Kubernetes Ecosystem:** The EBS CSI driver is fully integrated with the Kubernetes ecosystem, including Kubernetes PersistentVolumes, PersistentVolumeClaims, and StorageClasses. This allows for seamless integration with existing Kubernetes storage workflows.
+- __Integration with Kubernetes Ecosystem:__ The EBS CSI driver is fully integrated with the Kubernetes ecosystem, including Kubernetes PersistentVolumes, PersistentVolumeClaims, and StorageClasses. This allows for seamless integration with existing Kubernetes storage workflows.
 
 Overall, the EBS CSI driver plays a critical role in enabling Kubernetes clusters to effectively leverage EBS for persistent storage. It simplifies storage management, automates volume lifecycle operations, and enhances storage flexibility, making it an indispensable tool for Kubernetes environments.
 
