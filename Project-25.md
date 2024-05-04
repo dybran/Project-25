@@ -1,7 +1,7 @@
 ## __Deploying and Packaging Applications into Kubernetes with Helm__
 
 
-In [The Previous Project](https://github.com/dybran/Project-24/blob/main/Project-24.md), we used Helm to deploy applications on Kubernetes.
+In [the Previous Project](https://github.com/dybran/Project-24/blob/main/Project-24.md), we used Helm to deploy applications on Kubernetes.
 
 The aim of this project i sto deploy a set of DevOps tools, focusing on identifying and addressing common challenges in real-world deployments while refining our troubleshooting techniques.
 
