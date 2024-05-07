@@ -238,6 +238,8 @@ __Getting the Artifactory URL__
 
 The artifactory helm chart comes bundled with the Artifactory software, a __PostgreSQL database__ and __an Nginx proxy__ which it uses to configure routes to the different capabilities of Artifactory. Getting the pods after some time, you should see something like the below.
 
+`$ kubectl get pods -n tools -w`
+
 ![](./images/10.PNG)
 
 Each of the deployed application have their respective services. This is how you will be able to reach either of them.
